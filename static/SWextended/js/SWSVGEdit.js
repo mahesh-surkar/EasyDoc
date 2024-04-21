@@ -1643,7 +1643,7 @@ Snap.plugin(function (Snap, Element, Paper, glob)
             textdiv.style.MozBoxSizing = "border-box"; /* Code for Firefox to work prpperly */
             textdiv.style.border ="0.1px solid #ff0000";
             textdiv.style.MozBorder ="0.1px solid #ff0000";  /* Code for Firefox to work prpperly  */
-            textdiv.style.background = "#fcefa1";
+            //textdiv.style.background = "#fcefa1";
            // var textnode = document.createTextNode("Click to edit Text"); 
            // var textnode = document.createTextNode(""); 
            // textdiv.appendChild(textnode);
@@ -2930,11 +2930,13 @@ SW_SVG_UTIL.getArcCenter = function(curvePth)
 //***********************************************************************************************
 var SW_SVG_ICON = function (iconType, addSubIconExtender)
 {
+	var IconStrokeBlack='black';
+	var IconFillColor="#B1AFB5";
 	var iconCanvas = new SW_SVG_SNAP();
 	var icon = null;
-	vw = 26;
-	vh = 26;
-	vbStr="0 0 " + vw + " " + vh ;
+	vw = 30;
+	vh = 30;
+	vbStr="-2 -3 " + vw + " " + vh;
 	iconCanvas.attr({"viewBox": vbStr, "preserveAspectRatio": "xMidYMid meet"}); 
 	
 	headWidth=5;
@@ -2943,162 +2945,162 @@ var SW_SVG_ICON = function (iconType, addSubIconExtender)
 	{
 	    case SVG_ICON_FILL_COLOR:  	   
 	        var csX = 13, csY = 11, ceX = 14, ceY = 20;         
-            icon = iconCanvas.polyline(14,4,2,8,2,16,14,12).attr({ stroke: '#123456', 'strokeWidth': 1, fill: 'gray' });
-            icon  = iconCanvas.ellipse(14, 8, 2,4).attr({ stroke: '#123456', 'strokeWidth': 1, fill: 'gray' , "fill-opacity": "1"});
-            icon = iconCanvas.cubicurve(csX, csY, ceX, ceY, csX+6, csY, ceX+6, ceY).attr({ stroke: 'red', 'strokeWidth': 3, fill: 'gray' , "fill-opacity": "0.0", "stroke-opacity": "1"});
-            icon  = iconCanvas.arc(14, 18, 19, 18, 1, 0,8,4).attr({ stroke: '#123456', 'strokeWidth': 0, fill: 'red' , "fill-opacity": "1"});
-            icon  = iconCanvas.arc(10, 8, 12, 6, 1, 1,0.4,2).attr({ stroke: '#123456', 'strokeWidth': .5, fill: 'red' , "fill-opacity": "0.0"});
+            icon = iconCanvas.polyline(14,4,2,8,2,16,14,12).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: 'gray' });
+            icon  = iconCanvas.ellipse(14, 8, 2,4).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: 'gray' , "fill-opacity": "1"});
+            icon = iconCanvas.cubicurve(csX, csY, ceX, ceY, csX+6, csY, ceX+6, ceY).attr({ stroke: IconStrokeBlack, 'strokeWidth': 3, fill: 'gray' , "fill-opacity": "0.0", "stroke-opacity": "1"});
+            icon  = iconCanvas.arc(14, 18, 19, 18, 1, 0,8,4).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0, fill: IconStrokeBlack , "fill-opacity": "1"});
+            icon  = iconCanvas.arc(10, 8, 12, 6, 1, 1,0.4,2).attr({ stroke: IconStrokeBlack, 'strokeWidth': .5, fill: IconStrokeBlack , "fill-opacity": "0.0"});
 
             break
 		case SVG_SLIDE:
-			icon = iconCanvas.rect(2,3, 20, 20).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(2,3, 20, 20).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
 			break;
 		case SVG_SLIDES:
-			icon = iconCanvas.rect(2,3, 5, 5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(10,3, 5, 5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(18,3, 5,5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(2,11, 5, 5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(10,11, 5, 5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(18,11, 5,5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(2,19, 5, 5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(10,19, 5, 5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(18,19, 5,5).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(2,3, 5, 5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(10,3, 5, 5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(18,3, 5,5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(2,11, 5, 5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(10,11, 5, 5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(18,11, 5,5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(2,19, 5, 5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(10,19, 5, 5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(18,19, 5,5).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: 'white' , "fill-opacity": "0.5"});
 			break;
 		case SVG_OPEN:
-            icon = iconCanvas.polyline(3,24,3,12, 8,12).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.3"});
+            icon = iconCanvas.polyline(3,24,3,12, 8,12).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.3"});
 
-            icon = iconCanvas.polyline(9,13,9,4,15,4,20,8,20,13).attr({ stroke: '#123456', 'strokeWidth': 1, fill: 'white' , "fill-opacity": "0.9"});
-            icon = iconCanvas.polyline(5,22,5,22,5,7,9,7).attr({ stroke: '#123456', 'strokeWidth': 0.5, fill: 'white' , "fill-opacity": "0.9"});
-            icon = iconCanvas.polyline(15,4,15,8,20,8).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.5"});
-            var iconRect = iconCanvas.rect(5,13,18,11,2,2).attr({ stroke: '#123456', 'strokeWidth': 0.8, fill: '#123456' , "fill-opacity": "0.8"});
+            icon = iconCanvas.polyline(9,13,9,4,15,4,20,8,20,13).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: 'white' , "fill-opacity": "0.9"});
+            icon = iconCanvas.polyline(5,22,5,22,5,7,9,7).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.5, fill: 'white' , "fill-opacity": "0.9"});
+            icon = iconCanvas.polyline(15,4,15,8,20,8).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.5"});
+            var iconRect = iconCanvas.rect(5,13,18,11,2,2).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.8, fill: IconFillColor , "fill-opacity": "0.8"});
             iconRect.skew(-25, 0);
 		    break;
 		case SVG_SAVE:
-			icon  = iconCanvas.polygon(1,3, 1,24, 23,24, 23,10, 18,3).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0"});
-			icon  = iconCanvas.polyline(5,24, 5,16, 19,16, 19,24 ).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.3"});
-			icon  = iconCanvas.polyline(5,3, 5,12, 10,12, 10,3).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.7"});
-			icon  = iconCanvas.polyline(16,3, 16,12, 8,12).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0"});
+			icon  = iconCanvas.polygon(1,3, 1,24, 23,24, 23,10, 18,3).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: IconFillColor , "fill-opacity": "0"});
+			icon  = iconCanvas.polyline(5,24, 5,16, 19,16, 19,24 ).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.3"});
+			icon  = iconCanvas.polyline(5,3, 5,12, 10,12, 10,3).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: 'black' , "fill-opacity": "0.8"});
+			icon  = iconCanvas.polyline(16,3, 16,12, 8,12).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0"});
 			break;
 		case SVG_SOURCE:
-			icon  = iconCanvas.polygon(1,3, 1,24, 23,24, 23,10, 18,3).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0"});
-			icon  = iconCanvas.polyline(16,2, 16,10, 23,10 ).attr({ stroke: '#123456', 'strokeWidth': 0, fill: '#123456' , "fill-opacity": "0.7"});
-			icon = iconCanvas.text(1,20, "Source").attr({textpath: "M2,10L24,24",  'font-size':6, stroke: '#123456', 'strokeWidth': 0.8, fill: '#123456' , "fill-opacity": "0.9"});
-			icon = iconCanvas.line(3,8, 14, 8).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "1"});
-			icon = iconCanvas.line(3,14, 20, 14).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "1"});
-			icon = iconCanvas.line(3,19, 20, 19).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "1"});
+			icon  = iconCanvas.polygon(1,3, 1,24, 23,24, 23,10, 18,3).attr({ stroke: IconStrokeBlack, 'strokeWidth': 2, fill: IconFillColor , "fill-opacity": "0"});
+			icon  = iconCanvas.polyline(16,2, 16,10, 23,10 ).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0, fill: IconFillColor , "fill-opacity": "0.7"});
+			icon = iconCanvas.text(1,20, "Source").attr({textpath: "M2,10L24,24",  'font-size':6, stroke: IconStrokeBlack, 'strokeWidth': 0.8, fill: IconFillColor , "fill-opacity": "0.9"});
+			icon = iconCanvas.line(3,8, 14, 8).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "1"});
+			icon = iconCanvas.line(3,14, 20, 14).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "1"});
+			icon = iconCanvas.line(3,19, 20, 19).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "1"});
 
 			break;
 		case SVG_UNDO:
 			icon  = iconCanvas.curvearrow(4, 6, 9, 25, ARROW_HEAD_TYPE.LEFT_HEAD,
 					ARROW_SHAFT_TYPE.THICK_SHAFT, { minHeadWidth: 7/*headWidth*/,shaftWidth: 5,
 													mergeArrowTail: true, shaftDepth: 10,
-			}).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+			}).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "1"});
 			break;
 		case SVG_REDO:
 			icon  = iconCanvas.curvearrow(17,25,22, 6, ARROW_HEAD_TYPE.RIGHT_HEAD,
 					ARROW_SHAFT_TYPE.THICK_SHAFT, { minHeadWidth: 7/*headWidth*/, shaftWidth: 5,
 													mergeArrowTail: true, shaftDepth: 10,
-			}).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+			}).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "1"});
 			break;
 		case SVG_ELLIPSE:
-			icon = iconCanvas.circle(12,14, 11).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0.5"});
+			icon = iconCanvas.circle(12,14, 11).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.5"});
 			break;
 		case SVG_RECTANGLE:
-			icon = iconCanvas.rect(2,3, 20, 20).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0.5"});	
+			icon = iconCanvas.rect(2,3, 20, 20).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.5"});	
 			break;
 		case SVG_LINE:
-			icon = iconCanvas.line(2,3,20,20).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'gray' });
+			icon = iconCanvas.line(2,3,20,20).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor });
 			break;
 		case SVG_POLYLINE:
-			icon = iconCanvas.polyline(2,3,20,10,20,15, 2,20).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0.0"});;	
+			icon = iconCanvas.polyline(2,3,20,10,20,15, 2,20).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor, "fill-opacity": "0.0"});;	
 			break;
 		case SVG_CUBIC_CURVE:			
 			var csX = 2, csY = 10, ceX = 20, ceY = 10;
-			icon = iconCanvas.cubicurve(csX, csY, ceX, ceX, csX+30, csY-30, ceX-30, ceY+30).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'gray' , "fill-opacity": "0.0"});
+			icon = iconCanvas.cubicurve(csX, csY, ceX, ceX, csX+30, csY-30, ceX-30, ceY+30).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.0"});
 			break;	
 		case SVG_ARC:			
-			icon  = iconCanvas.arc(2, 10, 20, 20, 1, 1).attr({ stroke: '#123456', 'strokeWidth': 2, fill: 'gray' , "fill-opacity": "0.0"});
+			icon  = iconCanvas.arc(2, 10, 20, 20, 1, 1).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor, "fill-opacity": "0.0"});
 			break;
 		case SVG_LEFT_THIN_ARROW:
 			icon  = iconCanvas.linearrow(4, 3, 30, 30, ARROW_HEAD_TYPE.LEFT_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack, "fill-opacity": "1"});
 			break;
 		case SVG_RIGHT_THIN_ARROW:
 			icon  = iconCanvas.linearrow(4, 3, 24, 24, ARROW_HEAD_TYPE.RIGHT_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack, "fill-opacity": "1"});
 			break;
 		case SVG_LEFT_RIGHT_THIN_ARROW:
 			icon  = iconCanvas.linearrow(4, 3, 24, 24, ARROW_HEAD_TYPE.LEFT_RIGHT_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "1"});
 			break;
 		case SVG_LEFT_ARROW:
 			icon  = iconCanvas.linearrow(2, 10, 25, 20, ARROW_HEAD_TYPE.LEFT_HEAD,
-					ARROW_SHAFT_TYPE.THICK_SHAFT, {minHeadWidth :headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0.5"});
+					ARROW_SHAFT_TYPE.THICK_SHAFT, {minHeadWidth :headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "0.5"});
 			break;
 		case SVG_RIGHT_ARROW:
 			icon  = iconCanvas.linearrow(2, 10, 25, 20, ARROW_HEAD_TYPE.RIGHT_HEAD,
-					ARROW_SHAFT_TYPE.THICK_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0.5"});
+					ARROW_SHAFT_TYPE.THICK_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "0.5"});
 			break;
 		case SVG_LEFT_RIGHT_ARROW:
 			icon  = iconCanvas.linearrow(1, 10, 25, 20, ARROW_HEAD_TYPE.LEFT_RIGHT_HEAD,
-					ARROW_SHAFT_TYPE.THICK_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "0.5"});
+					ARROW_SHAFT_TYPE.THICK_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "0.5"});
 			break;
 			
 		case SVG_LEFT_CURVE_ARROW:			
 			icon  = iconCanvas.curvearrow(2, 6, 24, 22, ARROW_HEAD_TYPE.LEFT_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "1"});
 			break;
 		case SVG_RIGHT_CURVE_ARROW:				
 			icon  = iconCanvas.curvearrow(2, 6, 24, 20, ARROW_HEAD_TYPE.RIGHT_HEAD,
-						ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth : headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+						ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth : headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "1"});
 			break;
 		case SVG_LEFT_RIGHT_CURVE_ARROW:
 			icon  = iconCanvas.curvearrow(2, 6, 24, 20, ARROW_HEAD_TYPE.LEFT_RIGHT_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "1"});
 			break;
 		case SVG_TOP_CURVE_ARROW:			
 			icon  = iconCanvas.curvearrow(8, 4, 24, 26, ARROW_HEAD_TYPE.TOP_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth : headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth : headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "1"});
 			break;
 		case SVG_DOWN_CURVE_ARROW:				
 			icon  = iconCanvas.curvearrow(1, 2, 18, 24, ARROW_HEAD_TYPE.DOWN_HEAD,
-						ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth : headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+						ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth : headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "1"});
 			break;
 			
 		case SVG_TOP_DOWN_CURVE_ARROW:			
 			icon  = iconCanvas.curvearrow(8, 2, 18, 24, ARROW_HEAD_TYPE.TOP_DOWN_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "1"});
 			break;
 		
 		case SVG_TOP_RIGHT_CURVE_ARROW:
 			icon  = iconCanvas.curvearrow(8, 2, 24, 20, ARROW_HEAD_TYPE.TOP_RIGHT_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack , "fill-opacity": "1"});
 			break;
 		case SVG_LEFT_DOWN_CURVE_ARROW:
 			icon  = iconCanvas.curvearrow(2, 6, 18, 24, ARROW_HEAD_TYPE.LEFT_DOWN_HEAD,
-					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: '#123456', 'strokeWidth': 2, fill: '#123456' , "fill-opacity": "1"});
+					ARROW_SHAFT_TYPE.THIN_SHAFT, {minHeadWidth: headWidth }).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconStrokeBlack  , "fill-opacity": "1"});
 			break;
 			
 		case SVG_TABLE:
-			icon = iconCanvas.rect(2,4, 20, 6).attr({ stroke: '#123456', 'strokeWidth': 0.1, fill: '#123456' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(2,4, 20, 20).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.0"});
-			icon = iconCanvas.line(2,10, 22, 10).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.5"});
-			icon = iconCanvas.line(2,17,22, 17).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.5"});
-			icon = iconCanvas.line(8,4,8, 24).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.5"});
-			icon = iconCanvas.line(16,4,16, 24).attr({ stroke: '#123456', 'strokeWidth': 1, fill: '#123456' , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(2,4, 20, 6).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.1, fill: IconFillColor , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(2,4, 20, 20).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.0"});
+			icon = iconCanvas.line(2,10, 22, 10).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.5"});
+			icon = iconCanvas.line(2,17,22, 17).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.5"});
+			icon = iconCanvas.line(8,4,8, 24).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.5"});
+			icon = iconCanvas.line(16,4,16, 24).attr({ stroke: IconStrokeBlack, 'strokeWidth': 1, fill: IconFillColor , "fill-opacity": "0.5"});
 			break;
 			
 		case SVG_TEXT:
-			icon = iconCanvas.rect(2, 4, 20, 6).attr({ stroke: '#123456', 'strokeWidth': 0.1, fill: '#123456' , "fill-opacity": "0.5"});
-			icon = iconCanvas.rect(7.9,10, 7.9, 26).attr({ stroke: '#123456', 'strokeWidth': 0.1, fill: '#123456' , "fill-opacity": "0.5" });
-			icon = iconCanvas.text(1,20, "Text").attr({ stroke: '#123456', 'strokeWidth': 0.8, fill: '#123456' , "fill-opacity": "0.9"});
+			icon = iconCanvas.rect(2, 4, 20, 6).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.1, fill: IconFillColor , "fill-opacity": "0.5"});
+			icon = iconCanvas.rect(7.9,10, 7.9, 26).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.1, fill: IconFillColor , "fill-opacity": "0.5" });
+			icon = iconCanvas.text(1,20, "Text").attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.8, fill: IconFillColor , "fill-opacity": "0.9"});
 			break;
 	}
 	
    
 	if (addSubIconExtender)
 	{
-		icon = iconCanvas.polyline(20, 18, 24, 22, 20,26).attr({ stroke: '#123456', 'strokeWidth': 0.0, fill: 'maroon' , "fill-opacity": "1"});
+		icon = iconCanvas.polyline(20, 18, 24, 22, 20,26).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.0, fill: 'maroon' , "fill-opacity": "1"});
 	}
 	//alert(":"+iconCanvas);
 	return iconCanvas;

@@ -131,7 +131,7 @@ div.swRightControlsDiv {
 }
 
 .editorLeftVerticalControlPanel {
-	width: 31px;
+	width: 310px;
 	height: 505px;
 	background: inherit;
 	/*float :left;*/
@@ -985,63 +985,25 @@ button {
 
 
 .ui-tooltip{
-	/*outline: none;*/
 	position: relative;
 	display:inline;
-	background: rgba(54, 25, 25, .9);
-    padding: 3;
+	background: white;
+    padding-top: 1;	
+ 	border-radius: 0px;
+	border: none;
 }
 
 .ui-tooltip-content
 {
  	display:inline;
-    background: rgba(54, 25, 25, 0.0);
-    color: white;
-    font-family: "courier new,courier,monospace";
-	font-style: italic;
-	font-size: 15px; 
+    color: black;
+   /* font-family: "courier new,courier,monospace";*/
+	font-style: normal;
+	font-size: 11px; 
 	/*font-weight: bold;*/
-	padding :  3;
-	text-align: center !important;
-	
-}
 
-.SWMathKeyboard {
-	background: rgba(130, 112, 112, 0.9);
-	border: none;
-	width: 630px;
-	height: 70px;
-}
-
-.SWMathKeyboardBtn {
-	background: transparent;
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: 16px;
-	font-weight: bold;
-	border: none;
-	height: 70px;
-	width: 70px;
-	cursor: hand;
-	box-shadow: none;
-	outline: none;
-}
-
-.SWMathKeyboardBtn:hover {
-	color: maroon;
-}
-
-.SWmathInputDiv {
-	background: #FFFFCC;
-	color: maroon;
-	width: 80%;
-}
-
-#SWmathInputDiv .matrixed {
-	background: #FFFFCC;
-}
-
-#SWmathInputDiv .matrixed-container {
-	filter: progid:DXImageTransform.Microsoft.Chroma(color='#FFFFCC' );
+	text-align: center !important;	
+	border:none;
 }
 
 .svgforeign {
