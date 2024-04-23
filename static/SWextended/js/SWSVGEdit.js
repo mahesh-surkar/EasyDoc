@@ -5718,6 +5718,11 @@ SW_SVGCanvas.prototype.removeAllHelper = function(svg)
 	{
 		try
 		{
+			if (shapeList[i].type  == "foreignObject")
+			{
+				shapeList[i].node.getElementsByClassName("insideforeign")[0].setAttribute("contentEditable", "false");
+			}
+
 			if (this.isHelper(shapeList[i], 1)) //remove helper shapes exclude Selector
 			{
 				//console.log("Removig helper Shape");
@@ -7236,11 +7241,21 @@ SVGShape.prototype.unselect = function ()
 		this.shape.attr('cursor', 'auto');		
 	}
 	
+	if (this.isForeignObject())
+	{
+		this.getEditableElement().setAttribute("contenteditable", false);
+	}
+
 	this.isSelected = false;
 }
 
 SVGShape.prototype.select = function()
 {
+	if (this.isForeignObject())
+	{
+		this.getEditableElement().setAttribute("contenteditable", true);
+	}
+
 	this.shapeOnClick();
 }
 
