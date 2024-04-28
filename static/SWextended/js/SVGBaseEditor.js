@@ -57,10 +57,21 @@ function loadEditor()
 	loadControls(controls);
 
 	var editorDisplay = new SW_Display;
-        editorDisplay.appendElement(editorLayout);
 
-        swCanvas.setViewBox();
-        editor.makeEditableAreaScalable();	
+	/*
+	// Need to display SVG shape seleted.
+	var logger = document.createElement("div");
+	logger.setAttribute("style", "height:100px, width: 100px");
+	logger.className = "SWShapeLogger";
+	logger.innerText="thhhhh";
+    editorDisplay.appendElement(logger);
+	*/
+
+    editorDisplay.appendElement(editorLayout);		
+
+    swCanvas.setViewBox();
+    editor.makeEditableAreaScalable();	
+
 }
 
 
@@ -102,6 +113,8 @@ var loadControls = function(controls)
 	controls.addSubMenu(arrowMenu, new SW_SVG_ICON(SVG_LEFT_DOWN_CURVE_ARROW), "Left Down Arrow", SVG_LEFT_DOWN_CURVE_ARROW);
 	controls.addSubMenu(arrowMenu, new SW_SVG_ICON(SVG_TOP_RIGHT_CURVE_ARROW), "Top Right Arrow", SVG_TOP_RIGHT_CURVE_ARROW);
 	controls.splitLine(arrowMenu);
+
+	//controls.addInsertSVGFileMenu(TOOLBAR_TYPE.LEFT_TOOLBAR, new SW_SVG_ICON(SVG_INSERT_FILE, true), "Insert svg");
 	
 }
 //************************************************************************
@@ -335,7 +348,10 @@ SW_Controls.prototype.onEditorEvent = function(eventAction)
 		case SVG_LEFT_DOWN_CURVE_ARROW:
             editableArea.drawCurveArrow(ARROW_HEAD_TYPE.LEFT_DOWN_HEAD, ARROW_SHAFT_TYPE.THIN_SHAFT);
             break;
-        
+		case SVG_INSERT_FILE:
+			this.elemToDraw = SVG_NONE;
+			this.lastButtonClicked = null;
+			break;
 		default:
 			this.elemToDraw = SVG_NONE;	
 			this.lastButtonClicked = null;
@@ -581,6 +597,26 @@ SW_Controls.prototype.addTableMenu = function(toolbarToUse, menuName, tooltip, a
 	}
 	
 	return tableMenu;
+}
+
+SW_Controls.prototype.addInsertSVGFileMenu = function(toolbarToUse, menuName, tooltip, additionalParam)
+{
+
+		var openFileProcessCallback=function()
+		{
+			var openFileProcessCallback=function(fileInfo)
+			{
+				//var editableArea = this.swCanvas.getActiveSvgCanvas();
+				var mySvg = fileInfo.fileData.getElementsByTagName("svg")[0];	
+				this.swCanvas.loadSWSvgCanvas(mySvg);              	             
+			}
+			var fileOpener = new SW_FileOpener;
+			var localOpenFileProcessCallback = openFileProcessCallback.bind(this);
+			fileOpener.readFile(localOpenFileProcessCallback);
+		}
+
+		var localOpenFileProcessCallback = openFileProcessCallback.bind(this);
+		var insertSVG = this.addMenu(toolbarToUse, new SW_SVG_ICON(SVG_INSERT_FILE), tooltip, SVG_INSERT_FILE, {evtCallback: localOpenFileProcessCallback}, false);
 }
 
 SW_Controls.prototype.addMenu = function(toolbarToUse, menuName, tooltip, objType, additionalParam, enableSubMenu) 

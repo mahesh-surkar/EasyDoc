@@ -33,6 +33,8 @@ var SVG_REDO=26;
 var SVG_SAVE=27;
 var SVG_OPEN=28;
 var SVG_SOURCE=29;
+var SVG_INSERT_FILE=30;
+
 
 var SVG_SLIDE=500;
 var SVG_SLIDES=501;
@@ -2377,7 +2379,14 @@ Snap.plugin(function (Snap, Element, Paper, glob)
     elproto.makeTemplate = function()
     {    
         this.addClass("SWTemplate");
-        this.toBack();
+		try
+		{
+        	this.toBack();
+		}
+		catch
+		{
+			console.log("Can not ser template to back");
+		}
     }
     
     elproto.isTemplate = function(element)
@@ -3094,6 +3103,10 @@ var SW_SVG_ICON = function (iconType, addSubIconExtender)
 			icon = iconCanvas.rect(2, 4, 20, 6).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.1, fill: IconFillColor , "fill-opacity": "0.5"});
 			icon = iconCanvas.rect(7.9,10, 7.9, 26).attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.1, fill: IconFillColor , "fill-opacity": "0.5" });
 			icon = iconCanvas.text(1,20, "Text").attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.8, fill: IconFillColor , "fill-opacity": "0.9"});
+			break;
+
+		case SVG_INSERT_FILE:
+			icon = iconCanvas.text(1,20, "Insert").attr({ stroke: IconStrokeBlack, 'strokeWidth': 0.8, fill: IconFillColor , "fill-opacity": "0.9"});
 			break;
 	}
 	
@@ -6372,6 +6385,19 @@ var SVGShape = function(myShape, type, SWsvgCanvas)
 	//console.log("Added shape with angle: : " + myangle);
 }
 
+
+SVGShape.prototype.displayShapeDitails = function(message)
+{
+	// currently commented
+	var logElem = document.getElementsByClassName("SWShapeLogger")[0]; // by class JS version
+
+	if (logElem != null)
+	{
+		logElem.innerHTML = message;
+
+	}
+}
+
 SVGShape.prototype.resetTableAttr = function(isAddMode)
 {
     if (this.isForeignObject()) 
@@ -9184,6 +9210,10 @@ SVGShape.prototype.removeTableHelper = function()
 SVGShape.prototype.addActionDecorator = function()
 {
 
+	// Do not show resizer for path
+	/*if (this.shape.type == "path" && !this.isArrow())
+		return;*/
+
 	if(this.actionHandleGroup)
 	{
 		//Due to repeated events;
@@ -10055,6 +10085,17 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 			ry: Math.max(containerCordNewHeight/2,1) 
 		});	
 	}	
+	else if (this.shape.type == "circle")
+	{	
+		var cntrX = (containerCordNewWidth == 1) ?  parseInt(this.shape.attr('cx')) : containerCordNewCX;
+		var cntrY = (containerCordNewHeight == 1) ?  parseInt(this.shape.attr('cy')): containerCordNewCY;
+
+		this.shape.attr({
+			cx: cntrX,
+			cy: cntrY,
+			r: Math.max(containerCordNewWidth/2,1),
+		});	
+	}	
 	else if (this.shape.type == "path")
 	{
 		var origSegments = this.shape.myClone.node.getPathData();		
@@ -10095,6 +10136,31 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 				
 				d1 += seg.type+ptNewPosition.x+" "+ptNewPosition.y;
 			}
+			else if(seg.type === "A" || seg.type === "a")
+			{
+				d1 += seg.type;
+				var arcPath = new Object;
+				var origPoint = {x : origSeg.values[0], y : origSeg.values[1] };	
+				var ptNewPosition = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);
+				arcPath.crX1 = origSeg.values[0];
+				arcPath.crY1 = origSeg.values[1];
+				//arcPath.crX1 = ptNewPosition.x;
+				//arcPath.crY1 = ptNewPosition.y;
+
+				arcPath.xarX = origSeg.values[2];
+				arcPath.laf = origSeg.values[3];
+				arcPath.sf = origSeg.values[4];
+
+				var origPoint = {x : origSeg.values[5], y : origSeg.values[6] };	
+				var ptNewPosition = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);
+				arcPath.x = origSeg.values[5];
+				arcPath.y = origSeg.values[6];
+				//arcPath.x = ptNewPosition.x;
+				//arcPath.y = ptNewPosition.y
+				
+				d1 += arcPath.crX1+","+arcPath.crY1+","+arcPath.xarX+","+arcPath.laf+","+arcPath.sf+			
+					arcPath.x+","+arcPath.y;
+			}
 			else if (seg.type === "C" || seg.type === "c")
 			{
 				d1 += seg.type;
@@ -10119,6 +10185,49 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 					(curvePath.crX2 ? curvePath.crX2+","+curvePath.crY2+" " : "") +
 					curvePath.ceX+","+curvePath.ceY + " " ;
 
+			}		
+			else if (seg.type === "Q" || seg.type === "q") 
+			{
+				var origPoint = {x : origSeg.values[0], y : origSeg.values[1] };	
+				var ptNewPosition1 = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);							
+				
+				var origPoint = {x : origSeg.values[2], y : origSeg.values[3] };	
+				var ptNewPosition2 = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);							
+				
+				d1 += seg.type + ptNewPosition1.x+" "+ptNewPosition1.y + " " + ptNewPosition2.x+" "+ptNewPosition2.y;
+			}
+			else if (seg.type === "T" || seg.type === "t") 
+			{
+				var origPoint = {x : origSeg.values[0], y : origSeg.values[1] };	
+				var ptNewPosition = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);							
+
+				d1 += seg.type + ptNewPosition.x+" "+ptNewPosition.y;				
+			}
+			else if (seg.type === "S" || seg.type === "s") 
+			{
+				var origPoint = {x : origSeg.values[0], y : origSeg.values[1] };	
+				var ptNewPosition1 = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);							
+				
+				var origPoint = {x : origSeg.values[2], y : origSeg.values[3] };	
+				var ptNewPosition2 = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);							
+				
+				d1 += seg.type + ptNewPosition1.x+" "+ptNewPosition1.y + " " + ptNewPosition2.x+" "+ptNewPosition2.y;
+			}
+			else if (seg.type === "H" || seg.type === "h") 
+			{
+				var origWidth = origSeg.values[0];
+				var origPoint = {x : 0 + origWidth, y : 0};	//consider width from 0,0 point
+				var ptNewPosition = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);							
+				var newWidth = ptNewPosition.x;
+				d1 += seg.type + " " + newWidth;
+			}
+			else if (seg.type === "V" || seg.type === "v") 
+			{
+				var origHeight = origSeg.values[0];
+				var origPoint = {x : 0, y : 0 + origHeight};	//consider height from 0,0 point
+				var ptNewPosition = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);							
+				var newHeight = ptNewPosition.y;
+				d1 += seg.type + " "+ newHeight;
 			}
 			else if (seg.type === "Z" || seg.type === "z")
 			{
@@ -10131,6 +10240,7 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 		}
 		
 		console.log("New  Path d: " + d1);
+		this.displayShapeDitails(d1);
 		
 		this.shape.attr({
 			d: d1,
@@ -10859,5 +10969,8 @@ SVGShape.prototype.getNewPointPosition = function(orignalPosition, origPoint, re
 		ptNewPosition = null;
 	}
 	
+	//console.log("getNewPointPosition: new x,y cordinate: " + ptNewPosition.x +":"+ ptNewPosition.y);	
+	ptNewPosition.x = Math.round(ptNewPosition.x);
+	ptNewPosition.y = Math.round(ptNewPosition.y);
 	return ptNewPosition;
 }
