@@ -7288,7 +7288,7 @@ SVGShape.prototype.select = function()
 SVGShape.prototype.isForeignObject = function() 
 {
 	//alert("isForeignObject called:" + this.shape);
-	return (this.shape.type  == "g" && this.shape.hasClass("SWSVGForeignObj")) ? true : false;	
+	return (this.shape != null && this.shape.type  == "g" && this.shape.hasClass("SWSVGForeignObj")) ? true : false;	
 }
 
 SVGShape.prototype.getUpperElement = function()
@@ -10140,12 +10140,13 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 			{
 				d1 += seg.type;
 				var arcPath = new Object;
-				var origPoint = {x : origSeg.values[0], y : origSeg.values[1] };	
-				var ptNewPosition = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);
-				arcPath.crX1 = origSeg.values[0];
-				arcPath.crY1 = origSeg.values[1];
-				//arcPath.crX1 = ptNewPosition.x;
-				//arcPath.crY1 = ptNewPosition.y;
+				var origArcRediusX = origSeg.values[0];
+				var origArcRediusY = origSeg.values[1];	
+				var newRediusX = (origArcRediusX * containerCordNewWidth)/shapeOrigPosition.w;
+				var newRediusY = (origArcRediusY * containerCordNewHeight)/shapeOrigPosition.h;
+
+				arcPath.crX1 = Math.round(newRediusX);
+				arcPath.crY1 = Math.round(newRediusY);	
 
 				arcPath.xarX = origSeg.values[2];
 				arcPath.laf = origSeg.values[3];
@@ -10153,12 +10154,10 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 
 				var origPoint = {x : origSeg.values[5], y : origSeg.values[6] };	
 				var ptNewPosition = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);
-				arcPath.x = origSeg.values[5];
-				arcPath.y = origSeg.values[6];
-				//arcPath.x = ptNewPosition.x;
-				//arcPath.y = ptNewPosition.y
-				
-				d1 += arcPath.crX1+","+arcPath.crY1+","+arcPath.xarX+","+arcPath.laf+","+arcPath.sf+			
+				arcPath.x = ptNewPosition.x;
+				arcPath.y = ptNewPosition.y
+
+				d1 += arcPath.crX1+","+arcPath.crY1+","+arcPath.xarX+","+arcPath.laf+","+arcPath.sf+","	+		
 					arcPath.x+","+arcPath.y;
 			}
 			else if (seg.type === "C" || seg.type === "c")
