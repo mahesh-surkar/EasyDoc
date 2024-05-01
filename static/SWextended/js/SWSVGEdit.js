@@ -1891,10 +1891,11 @@ Snap.plugin(function (Snap, Element, Paper, glob)
 		var end = polarToCartesian(x, y, radiusX, radiusY, startAngle);
 
 		//var largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+		var sweepFlag = 0;
 
 		var d1 = [
 		         "M", start.x, start.y, 
-		         "A", radiusX, radiusY, 0, largeArcFlag, 0, end.x, end.y
+		         "A", radiusX, radiusY, 0, largeArcFlag, sweepFlag, end.x, end.y
 		         ].join(" ");
 
 		var arc = this.path(d1);
@@ -2285,16 +2286,20 @@ block.skew(90,0); // try (0,90 for skewY)
 			}
 			else if (seg.type === "L" || seg.type === "l") //Not expected in cubic/quadratic/arc curve
 			{
-				isOnlyCurve = false;		
-				
+							
+				//check last seg is Arc
+				if (curvePath.type != "A" && curvePath.type != "a")
+				{
+					curvePath.type=seg.type;
+					isOnlyCurve = false;
+				}
+
 				if (ignoreCurveArrow)
 				{
-					curvePath.type = "P"; // caan be cureArrow
+					curvePath.type = "P"; // can be cureArrow
 					return curvePath;
 				}
-				
-				curvePath.type=seg.type;
-				
+
 				var x = seg.values[0];
 				var y = seg.values[1];			
 				//console.log(`L ${x} ${y}`);
@@ -7504,6 +7509,7 @@ SVGShape.prototype.addArcModifier = function()
 		return; //already present
 	}
 	
+
 	var curvePth = this.shape.parseCurvePath();
 
 	var bBox = this.shape.getBBox(1);
@@ -7557,7 +7563,9 @@ SVGShape.prototype.addArcModifier = function()
 
 	var arcResizeStart = function (mystartResizer, myendResizer, resizerType)
 	{
-		var curvePth = this.shape.parseCurvePath();
+		this.removeShapeEditHelper({keepArcModifier: true});
+
+		curvePth = this.shape.parseCurvePath();
 		arcCenter = SW_SVG_UTIL.getArcCenter(curvePth)[0];
 		
 		var mystartResizerXY = new Array;
@@ -7623,7 +7631,11 @@ SVGShape.prototype.addArcModifier = function()
 	
 	var arcResizeEnd = function (arcRefCircle, myresizer, resizerType)
 	{
-		var curvePth = this.shape.parseCurvePath();
+		//Reset as size of shape is changed.
+		this.removeShapeEditHelper({keepArcModifier: false});
+		this.addShapeEditHelper();
+
+		curvePth = this.shape.parseCurvePath();
 		arcCenter = SW_SVG_UTIL.getArcCenter(curvePth)[0];
 
 		if (resizerType == "CS")
@@ -7669,7 +7681,9 @@ SVGShape.prototype.addArcModifier = function()
 		resizerXY.x = resizerXY.x;
 		resizerXY.y = resizerXY.y;
 
-		var newCurvePath = curvePath;
+		var newCurvePath = Object.assign({}, curvePath);
+
+		//alert(JSON.stringify(newCurvePath));
 		
 		if (resizerType == "CE")
 		{
@@ -7691,8 +7705,8 @@ SVGShape.prototype.addArcModifier = function()
 			
 			newCurvePath.ceX= arcCenter.x +(origRediusX * Math.cos(newEndPtAngleWRTCenterXAxis * Math.PI / 180));
 			newCurvePath.ceY= arcCenter.y +(origRediusY * Math.sin(newEndPtAngleWRTCenterXAxis * Math.PI / 180));
-		
-			L2.setLinePathLength(arcCenter.x, arcCenter.y, newCurvePath.ceX, newCurvePath.ceY);	
+
+			L2.setLinePathLength(arcCenter.x, arcCenter.y, newCurvePath.ceX, newCurvePath.ceY);
 		}
 		else if (resizerType == "CS")
 		{
@@ -7708,16 +7722,15 @@ SVGShape.prototype.addArcModifier = function()
 			newCurvePath.csY=Math.abs(interSectionPoints[0].y);				
 
 			newStartPtAngleWRTCenterXAxis = SW_SVG_UTIL.angleBetweenTwoPoints(arcCenter, interSectionPoints[0]);
-			//var newEndPtAngleWRTCenterXAxis = SW_SVG_UTIL.angleBetweenTwoPoints(arcCenter, myendResizerXY);	
+			var newEndPtAngleWRTCenterXAxis = SW_SVG_UTIL.angleBetweenTwoPoints(arcCenter, myendResizerXY);	
 
 			newCurvePath.csX= arcCenter.x +(origRediusX * Math.cos((newStartPtAngleWRTCenterXAxis) * Math.PI / 180));
 			newCurvePath.csY= arcCenter.y +(origRediusY * Math.sin((newStartPtAngleWRTCenterXAxis) * Math.PI / 180));
 
 			newCurvePath.ceX= arcCenter.x +(origRediusX * Math.cos((newEndPtAngleWRTCenterXAxis)* Math.PI / 180));
 			newCurvePath.ceY= arcCenter.y +(origRediusY * Math.sin((newEndPtAngleWRTCenterXAxis) * Math.PI / 180));			
-				
-			L1.setLinePathLength(arcCenter.x, arcCenter.y, newCurvePath.csX, newCurvePath.csY);
 
+			L1.setLinePathLength(arcCenter.x, arcCenter.y, newCurvePath.csX, newCurvePath.csY);	
 		}
 		else if (resizerType == "RD")
 		{					
@@ -7757,9 +7770,20 @@ SVGShape.prototype.addArcModifier = function()
 			newCurvePath.ceY= interSectionPoints2[0].y;
 			
 			mystartResizer.attr({ cx:newCurvePath.csX, cy: newCurvePath.csY });
-			endHandle.attr({ cx: newCurvePath.ceX, cy: newCurvePath.ceY });			
+			endHandle.attr({ cx: newCurvePath.ceX, cy: newCurvePath.ceY });		
 		}			
 		
+		var newArcCenter = SW_SVG_UTIL.getArcCenter(newCurvePath);
+		var centerDiffX = Math.abs(newArcCenter[0].x - arcCenter.x);
+		var centerDiffY = Math.abs(newArcCenter[0].y - arcCenter.y);
+
+		if (centerDiffX > 2 || centerDiffY > 2)
+		{
+			newCurvePath.asf = curvePath.asf == 0 ? 1 : 0;
+		}	
+
+		this.displayShapeDitails(centerDiffX +","+ centerDiffY+","+newCurvePath.asf +";"+ curvePath.asf +","+ Math.round(newArcCenter[0].x)+","+ Math.round(newArcCenter[0].y)+ "," +  arcCenter.x+ ","+arcCenter.y);
+
 		var dY = arcCenter.y - newCurvePath.csY;
 		var dX = arcCenter.x - newCurvePath.csX;
 		var startPtAngleInDegrees = (Math.atan2(dY,dX) / Math.PI * 180.0);
@@ -7775,14 +7799,14 @@ SVGShape.prototype.addArcModifier = function()
 		//console.log("angleBetweenPoints before :"+ startPtAngleInDegrees +","+endPtAngleInDegrees +","+angleBetweenArcPts);
 		
 		
-		if (angleBetweenArcPts > 0 && angleBetweenArcPts <= 180)
+		/*if (angleBetweenArcPts > 0 && angleBetweenArcPts <= 180)
 		{
 			newCurvePath.alf = 0;
 		}
 		else
 		{
 			newCurvePath.alf = 1;
-		}
+		}*/
 		
 		//console.log("angleBetweenPoints"+ startPtAngleInDegrees +","+endPtAngleInDegrees +","+angleBetweenArcPts);
 		
@@ -7810,7 +7834,7 @@ SVGShape.prototype.addArcModifier = function()
 	var arcRefCircleStart = function () 
 	{
 		this.shape.data('origTransform', this.shape.transform().local);
-		this.removeArcModifier();
+		this.removeShapeEditHelper();
 	}
 	
 	var arcRefCircleMov = function (dx,dy) 
@@ -7827,7 +7851,8 @@ SVGShape.prototype.addArcModifier = function()
 
 	var arcRefCircleStop = function () 
 	{
-		this.addArcModifier();
+		this.addShapeEditHelper();
+		//this.addArcModifier();
 	}
 	
 	var onArcRefCircleStart = arcRefCircleStart.bind(this);
@@ -7858,12 +7883,6 @@ SVGShape.prototype.addCurveDecorator = function()
 	{
 
 		var curvePth = this.shape.parseCurvePath();
-
-		if (curvePth.type == "A" || curvePth.type == "a") //arc
-		{
-			this.addArcModifier();
-			return;
-		}
 
 		var len = Snap.path.getTotalLength(this.shape);
 		
@@ -9496,19 +9515,28 @@ SVGShape.prototype.addShapeEditHelper = function()
         return;
     }
     
-    if (this.isCurvePath())
+    if (this.isCurvePath() && this.shapeType == "cubicCurve")
     {
         this.addShapeDrager();
         this.addCurveDecorator();
     }		
     else
-    {	
+    {			
         this.addShapeContainer();
         this.addShapeDrager();
         this.addShapeRotator();
         this.addActionDecorator();	
 
-        if (this.shape.type  == "polyline" )
+		if (this.shape.type == "path")
+		{
+			this.setShapeType();
+			
+			if (this.shapeType == "arcCurve") //arc
+			{
+				this.addArcModifier();			
+			}
+		}
+        else if (this.shape.type  == "polyline" )
         {
             this.addPolyLineDecorator();	
         }
@@ -9527,22 +9555,31 @@ SVGShape.prototype.addShapeEditHelper = function()
     }	
 }
 
-SVGShape.prototype.removeShapeEditHelper = function(keepContainer)
+SVGShape.prototype.removeShapeEditHelper = function(keepObject)
 {
+	if (keepObject == undefined ||  keepObject == null)
+	{
+		keepObject = {};
+	}
+
     if (this.shape.hasClass("SWInnerText"))
     {
-        this.swAssociatedShape.removeShapeEditHelper(keepContainer);
+        this.swAssociatedShape.removeShapeEditHelper(keepObject.keepContainer);
         return;
     }
     
-	if (this.isCurvePath())
+	if (this.isCurvePath() && this.shapeType == "cubicCurve")
 	{
 		this.removeCurveDecorator();
 		this.removeShapeDrager();
 	}	
 	else
-	{	
-		if (this.shape.type  == "polyline" )
+	{
+		if (this.shapeType == "arcCurve" && (keepObject.keepArcModifier === undefined || !keepObject.keepArcModifier))
+		{
+			this.removeArcModifier();
+		}
+		else if (this.shape.type  == "polyline" )
 		{
 			this.removePolyLineDecorator();	
 		}
@@ -9560,7 +9597,7 @@ SVGShape.prototype.removeShapeEditHelper = function(keepContainer)
 		}
 		
 		this.removeActionDecorator();
-		if (!keepContainer) this.removeShapeContainer();
+		if (keepObject.keepContainer != undefined && !keepObject.keepContainer) this.removeShapeContainer();
 		this.removeShapeRotator();
 		this.removeShapeDrager();
 	}
@@ -9872,7 +9909,7 @@ SVGShape.prototype.shapeResizeStart = function()
 	this.startRecording();
 	this.shape.recordOnStop = false;
 	//console.log("SW shape rezie start1");
-	this.removeShapeEditHelper(true /*keep shape container*/);
+	this.removeShapeEditHelper({keepContainer: true} /*keep shape container*/);
 	
 	this.shape.fo  = this.shape.attr('fill-opacity');
 	this.shape.om = this.shape.transform().localMatrix;
@@ -10077,24 +10114,56 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 	{	
 		var cntrX = (containerCordNewWidth == 1) ?  parseInt(this.shape.attr('cx')) : containerCordNewCX;
 		var cntrY = (containerCordNewHeight == 1) ?  parseInt(this.shape.attr('cy')): containerCordNewCY;
-
+		cntrX = Math.round(cntrX);
+		cntrY = Math.round(cntrY);
+		reduisX = Math.round(Math.max(containerCordNewWidth/2,1));
+		reduisY = Math.round(Math.max(containerCordNewHeight/2,1));
+		
 		this.shape.attr({
 			cx: cntrX,
 			cy: cntrY,
-			rx: Math.max(containerCordNewWidth/2,1),
-			ry: Math.max(containerCordNewHeight/2,1) 
+			rx: reduisX,
+			ry: reduisY
 		});	
+
+		this.displayShapeDitails(cntrX+" "+ cntrY+ " "+ reduisX+ " " + reduisY);
 	}	
 	else if (this.shape.type == "circle")
 	{	
-		var cntrX = (containerCordNewWidth == 1) ?  parseInt(this.shape.attr('cx')) : containerCordNewCX;
-		var cntrY = (containerCordNewHeight == 1) ?  parseInt(this.shape.attr('cy')): containerCordNewCY;
+		var newReduis = Math.round(Math.max(Math.min(containerCordNewWidth,containerCordNewHeight)/2,1));
+		var cntrX = containerCordNewX1+newReduis;
+		var cntrY = containerCordNewY1+newReduis;
+
+		if (newReduis == 1)
+		{
+			cntrX = parseInt(this.shape.attr('cx'));
+			cntrY = parseInt(this.shape.attr('cy'));
+		}		
+		else if (resizerType == "TL")
+		{	
+			cntrX = containerCordNewX2-newReduis;
+			cntrY = containerCordNewY2-newReduis;
+		}
+		else if (resizerType =="BL")
+		{	
+			cntrX = containerCordNewX2-newReduis;
+			cntrY = containerCordNewY1+newReduis;
+		}
+		else if (resizerType =="TR")
+		{
+			var cntrX = containerCordNewX1+newReduis;
+			var cntrY = containerCordNewY2-newReduis;
+		}
+		
+	
 
 		this.shape.attr({
 			cx: cntrX,
 			cy: cntrY,
-			r: Math.max(containerCordNewWidth/2,1),
+			r: newReduis,
 		});	
+
+		this.displayShapeDitails(cntrX+","+ cntrY+ ","+ newReduis);
 	}	
 	else if (this.shape.type == "path")
 	{
@@ -10142,11 +10211,39 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 				var arcPath = new Object;
 				var origArcRediusX = origSeg.values[0];
 				var origArcRediusY = origSeg.values[1];	
-				var newRediusX = (origArcRediusX * containerCordNewWidth)/shapeOrigPosition.w;
-				var newRediusY = (origArcRediusY * containerCordNewHeight)/shapeOrigPosition.h;
 
-				arcPath.crX1 = Math.round(newRediusX);
-				arcPath.crY1 = Math.round(newRediusY);	
+
+				var newWidth = shapeOrigPosition.w+delta.x;
+				var newHeight =	shapeOrigPosition.h+delta.y
+
+				if (resizerType == "BL" )
+				{
+					newWidth = shapeOrigPosition.w-delta.x;
+					newHeight = shapeOrigPosition.h+delta.y
+				}
+				else if (resizerType == "TL" )
+				{
+					newWidth = shapeOrigPosition.w-delta.x;
+					newHeight = shapeOrigPosition.h-delta.y
+
+				}
+				else if (resizerType == "TR" )
+				{
+					newWidth = shapeOrigPosition.w+delta.x;
+					newHeight = shapeOrigPosition.h-delta.y
+				}
+
+				if (newWidth <= 1)
+					newWidth=1;
+
+				if (newHeight <= 1)
+					newHeight=1;
+
+				var newRediusX = (origArcRediusX * (newWidth))/shapeOrigPosition.w;
+				var newRediusY = (origArcRediusY * (newHeight))/shapeOrigPosition.h;
+
+				arcPath.rX = Math.round(newRediusX);
+				arcPath.rY = Math.round(newRediusY);	
 
 				arcPath.xarX = origSeg.values[2];
 				arcPath.laf = origSeg.values[3];
@@ -10154,11 +10251,22 @@ SVGShape.prototype.shapeResizeMove = function(dx, dy, x, y, evt, resizerType)
 
 				var origPoint = {x : origSeg.values[5], y : origSeg.values[6] };	
 				var ptNewPosition = this.getNewPointPosition(shapeOrigPosition, origPoint, resizerType, delta);
-				arcPath.x = ptNewPosition.x;
-				arcPath.y = ptNewPosition.y
+				
+				if (newWidth != 1)
+					arcPath.x = ptNewPosition.x;
+				else
+					arcPath.x = seg.values[5];
 
-				d1 += arcPath.crX1+","+arcPath.crY1+","+arcPath.xarX+","+arcPath.laf+","+arcPath.sf+","	+		
+				if (newHeight != 1)
+					arcPath.y = ptNewPosition.y
+				else 
+					arcPath.y = seg.values[6];
+
+				d1 += arcPath.rX+","+arcPath.rY+","+arcPath.xarX+","+arcPath.laf+","+arcPath.sf+","	+		
 					arcPath.x+","+arcPath.y;
+					
+				//this.shape.parent().circle(arcPath.x, arcPath.y, 2);
+					
 			}
 			else if (seg.type === "C" || seg.type === "c")
 			{
@@ -10565,12 +10673,11 @@ SVGShape.prototype.resetCurvePathCord = function (curvePath)
 		}
 	}
 	else if (curvePath.type == "A" ||  curvePath.type == "a" )
-	{
-			
+	{			
 		var d1 = 
-			"M"+curvePath.csX+","+curvePath.csY+" "+curvePath.type+
-			curvePath.arX+","+curvePath.arY+" "+curvePath.axR+" "+ curvePath.alf + " "+ curvePath.asf +" "+
-			curvePath.ceX+","+curvePath.ceY;
+			"M"+curvePath.csX+" "+curvePath.csY+" "+curvePath.type+
+			curvePath.arX+" "+curvePath.arY+" "+curvePath.axR+" "+ curvePath.alf + " "+ curvePath.asf +" "+
+			curvePath.ceX+" "+curvePath.ceY;
 		
 		this.shape.attr({
 			d: d1,
