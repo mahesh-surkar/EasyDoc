@@ -2822,6 +2822,24 @@ SW_SVG_UTIL.angleBetweenTwoLines = function (A,B,C)
 	 return SW_SVG_UTIL.angleToDegrees(Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB)));
 }
 
+//angle between line AB and line BC, in clockWise direction from line AB
+SW_SVG_UTIL.angleBetweenTwoLinesClockwise = function (A,B,C)
+{
+	var dY = B.y - A.y;
+	var dX = B.x - A.x;
+	var startPtAngleInDegrees = (Math.atan2(dY,dX) / Math.PI * 180.0);
+
+	dY = B.y - C.y; 
+	dX = B.x - C.x;			
+	var endPtAngleInDegrees = (Math.atan2(dY,dX) / Math.PI * 180.0);		
+		
+	var angleBetweenPts = startPtAngleInDegrees < endPtAngleInDegrees ? endPtAngleInDegrees - startPtAngleInDegrees
+										: 360+endPtAngleInDegrees - startPtAngleInDegrees;
+
+	return angleBetweenPts;	
+}
+
+
 //angle between two points wrto x axis of pt1
 SW_SVG_UTIL.angleBetweenTwoPoints = function (pt1, pt2)
 {
@@ -7694,14 +7712,13 @@ SVGShape.prototype.addArcModifier = function()
 			
 			var interSectionPoints = Snap.path.intersection(arcRefCircle, L2);
 			newCurvePath.ceX=Math.abs(interSectionPoints[0].x);
-			newCurvePath.ceY=Math.abs(interSectionPoints[0].y);		
-			
-			
+			newCurvePath.ceY=Math.abs(interSectionPoints[0].y);
+
 			//newStartPtAngleWRTCenterXAxis = SW_SVG_UTIL.angleBetweenTwoPoints(arcCenter, mystartResizerXY);
 			newEndPtAngleWRTCenterXAxis = SW_SVG_UTIL.angleBetweenTwoPoints(arcCenter, interSectionPoints[0]);			
 			
-			newCurvePath.csX= arcCenter.x +(origRediusX * Math.cos((newStartPtAngleWRTCenterXAxis) * Math.PI / 180));
-			newCurvePath.csY= arcCenter.y +(origRediusY * Math.sin((newStartPtAngleWRTCenterXAxis) * Math.PI / 180));
+			//newCurvePath.csX= arcCenter.x +(origRediusX * Math.cos((newStartPtAngleWRTCenterXAxis) * Math.PI / 180));
+			//newCurvePath.csY= arcCenter.y +(origRediusY * Math.sin((newStartPtAngleWRTCenterXAxis) * Math.PI / 180));
 			
 			newCurvePath.ceX= arcCenter.x +(origRediusX * Math.cos(newEndPtAngleWRTCenterXAxis * Math.PI / 180));
 			newCurvePath.ceY= arcCenter.y +(origRediusY * Math.sin(newEndPtAngleWRTCenterXAxis * Math.PI / 180));
@@ -7727,8 +7744,8 @@ SVGShape.prototype.addArcModifier = function()
 			newCurvePath.csX= arcCenter.x +(origRediusX * Math.cos((newStartPtAngleWRTCenterXAxis) * Math.PI / 180));
 			newCurvePath.csY= arcCenter.y +(origRediusY * Math.sin((newStartPtAngleWRTCenterXAxis) * Math.PI / 180));
 
-			newCurvePath.ceX= arcCenter.x +(origRediusX * Math.cos((newEndPtAngleWRTCenterXAxis)* Math.PI / 180));
-			newCurvePath.ceY= arcCenter.y +(origRediusY * Math.sin((newEndPtAngleWRTCenterXAxis) * Math.PI / 180));			
+			//newCurvePath.ceX= arcCenter.x +(origRediusX * Math.cos((newEndPtAngleWRTCenterXAxis)* Math.PI / 180));
+			//newCurvePath.ceY= arcCenter.y +(origRediusY * Math.sin((newEndPtAngleWRTCenterXAxis) * Math.PI / 180));			
 
 			L1.setLinePathLength(arcCenter.x, arcCenter.y, newCurvePath.csX, newCurvePath.csY);	
 		}
@@ -7779,22 +7796,12 @@ SVGShape.prototype.addArcModifier = function()
 
 		if (centerDiffX > 2 || centerDiffY > 2)
 		{
-			newCurvePath.asf = curvePath.asf == 0 ? 1 : 0;
+			newCurvePath.alf = curvePath.alf == 0 ? 1 : 0;
 		}	
 
 		this.displayShapeDitails(centerDiffX +","+ centerDiffY+","+newCurvePath.asf +";"+ curvePath.asf +","+ Math.round(newArcCenter[0].x)+","+ Math.round(newArcCenter[0].y)+ "," +  arcCenter.x+ ","+arcCenter.y);
-
-		var dY = arcCenter.y - newCurvePath.csY;
-		var dX = arcCenter.x - newCurvePath.csX;
-		var startPtAngleInDegrees = (Math.atan2(dY,dX) / Math.PI * 180.0);
-
-		dY = arcCenter.y - newCurvePath.ceY; 
-		dX = arcCenter.x - newCurvePath.ceX;			
-		var endPtAngleInDegrees = (Math.atan2(dY,dX) / Math.PI * 180.0);
 		
-		
-		var angleBetweenArcPts = startPtAngleInDegrees < endPtAngleInDegrees ? endPtAngleInDegrees - startPtAngleInDegrees
-										: 360+endPtAngleInDegrees - startPtAngleInDegrees;
+		//var angleBetweenArcPts = SW_SVG_UTIL.angleBetweenTwoLinesClockwise({x: newCurvePath.csX, y: newCurvePath.csY}, arcCenter, {x: newCurvePath.ceX, y: newCurvePath.ceY});
 	
 		//console.log("angleBetweenPoints before :"+ startPtAngleInDegrees +","+endPtAngleInDegrees +","+angleBetweenArcPts);
 		
@@ -9531,7 +9538,11 @@ SVGShape.prototype.addShapeEditHelper = function()
 		{
 			this.setShapeType();
 			
-			if (this.shapeType == "arcCurve") //arc
+			if (this.isArrow())
+        	{
+            this.addArrowHelper();
+        	}	
+			else if (this.shapeType == "arcCurve") //arc
 			{
 				this.addArcModifier();			
 			}
@@ -9543,11 +9554,7 @@ SVGShape.prototype.addShapeEditHelper = function()
         else if (this.shape.type  == "rect")
         {
             this.addRectangleHelper();
-        }
-        else if (this.isArrow())
-        {
-            this.addArrowHelper();
-        }	
+        }        
         else if (this.isTable())
         {
             this.addTableHelper();
