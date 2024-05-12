@@ -8014,17 +8014,9 @@ SVGShape.prototype.removeCurveDecorator = function()
 	}
 }
 
-SVGShape.prototype.addPolyLineDecorator = function()
+
+SVGShape.prototype.createPointDrawgger = function()
 {
-
-	if(this.ShapeSpecificHelperGroup)
-	{
-		//Due to repeated events;
-		console.log("********Already Handler set ignoring...");
-		return;
-	}
-
-	var points = this.shape.node.points;
 	var meshLineHR = null;
 	var meshLineVR = null;
 
@@ -8035,22 +8027,21 @@ SVGShape.prototype.addPolyLineDecorator = function()
 		if (meshLineVR) { meshLineVR.remove(); meshLineVR = null; }
 	
 		this.addShapeEditHelper();
-		this.stopRecording(this.shape.recordOnStop);
-		this.shape.recordOnStop = false;
+		this.stopRecording(this.recordOnStop);
+		this.recordOnStop = false;
 	}
 
 	var dragStartFunct = function() 
 	{
 		this.startRecording();
-		this.shape.recordOnStop = false;
+		this.recordOnStop = false;
 		this.removeShapeEditHelper();
 	}
 
-
-	var dragFunct = function(shapeResizer, point, dx, dy, x, y,evt) 
+	var dragFunct = function(shapeResizer, point, changePointAt, dx, dy, x, y,evt) 
 	{		
 		
-		this.shape.recordOnStop = true;
+		this.recordOnStop = true;
 		if (meshLineHR) { meshLineHR.remove(); meshLineHR = null; }
 		if (meshLineVR) { meshLineVR.remove(); meshLineVR = null; }		
 
@@ -8068,13 +8059,359 @@ SVGShape.prototype.addPolyLineDecorator = function()
 			cy:  resizerXY.y,			
 		});
 
-		point.x = resizerXY.x;
-		point.y = resizerXY.y;
+		var origPoint = {x: point.x, y: point.y};		
+		var newPoint = {x: Math.round(resizerXY.x), y: Math.round(resizerXY.y)};
+
+		var d1 = "";
+
+		var change = "";
+		if (changePointAt < 0)
+		{
+			//For polyline, chaning original point value.
+			point.x = newPoint.x;
+			point.y = newPoint.y;
+		}
+		else
+		{
+			//For path
+			var origSegments = this.shape.node.getPathData();	
+		
+			var pathData = this.shape.attr("d");	
+			var segmentsWithAbsoluteValue = Snap.path.toAbsolute(pathData);
+
+			var pendingX = 0;
+			var pendingY = 0;
+
+			var segmentTochange = origSegments[changePointAt];
+
+			var indexOfPointToChangeBeforeCurrentPoint_X = -1;
+			var indexOfPointToChangeBeforeCurrentPoint_Y = -1;
+			var indexOfPointToChangeAfterCurrentPoint_X = -1;
+			var indexOfPointToChangeAfterCurrentPoint_Y = -1;
+
+			for (var counter = 0; counter < origSegments.length; counter++)
+			{
+				var seg = origSegments[counter];
+
+				if (counter == changePointAt)
+				{
+					if (seg.type == "h")
+					{	
+						indexOfPointToChangeBeforeCurrentPoint_X = -1;
+						indexOfPointToChangeAfterCurrentPoint_X = -1;
+					}
+					else if (seg.type == "v")
+					{
+						indexOfPointToChangeBeforeCurrentPoint_Y = -1;
+						indexOfPointToChangeAfterCurrentPoint_Y = -1;
+					}
+				}
+				if (counter < changePointAt)
+				{		
+					change+="c"+	counter;		
+					if (seg.type == "h" || seg.type == "H")
+					{
+						indexOfPointToChangeBeforeCurrentPoint_X = counter;
+					}
+					else if (seg.type == "v" || seg.type == "V")
+					{	
+						indexOfPointToChangeBeforeCurrentPoint_Y = counter;
+					}
+					else
+					{
+						indexOfPointToChangeBeforeCurrentPoint_X = counter;
+						indexOfPointToChangeBeforeCurrentPoint_Y = counter;
+					}							
+				}
+				else if (counter > changePointAt)
+				{
+						if (seg.type == "h" || seg.type == "H")
+						{
+							if (indexOfPointToChangeAfterCurrentPoint_X == -1)
+								indexOfPointToChangeAfterCurrentPoint_X = counter;
+						}
+						else if (seg.type == "v" || seg.type == "V")
+						{	
+							if (indexOfPointToChangeAfterCurrentPoint_Y == -1)
+								indexOfPointToChangeAfterCurrentPoint_Y = counter;
+						}
+						else
+						{
+							if (indexOfPointToChangeAfterCurrentPoint_X == -1)
+								indexOfPointToChangeAfterCurrentPoint_X = counter;
+							
+							if (indexOfPointToChangeAfterCurrentPoint_Y == -1)
+								indexOfPointToChangeAfterCurrentPoint_Y = counter;
+						}		
+				}				
+			}
+
+
+			for (var counter = 0; counter < origSegments.length; counter++)
+			{
+				var seg = origSegments[counter];
+				
+				if (counter == changePointAt)
+				{
+					
+					if (seg.type.toUpperCase() == seg.type)
+					{ //current seg is Absolute point
+						
+						if (seg.type == "H")
+							d1 += seg.type + newPoint.x;
+						else if (seg.type == "V")
+							d1 += seg.type + newPoint.y;
+						else
+							d1 += seg.type + newPoint.x + " " + newPoint.y;						
+					}
+					else
+					{ //current seg is relative point
+							if (counter == 0)
+							{
+								//First segment is relative.
+								d1 += seg.type + newPoint.x + " " + newPoint.y;
+							}	
+							else if (seg.type == "h" )
+							{
+								var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+								var distX = newPoint.x - origPointAbsoluteValueArray[1];//x
+								d1 += seg.type + (seg.values[0]+ distX);
+							}
+							else if (seg.type == "v" )
+							{
+								var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+								var distY = newPoint.y - origPointAbsoluteValueArray[1];//y
+								d1 += seg.type + (seg.values[0]+ distY);
+							}	
+							else
+							{
+								/*var prevPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter-1];
+								var distX = newPoint.x - prevPointAbsoluteValueArray[1];//x
+								var distY= newPoint.y - prevPointAbsoluteValueArray[2];//y*/
+								//d1 += seg.type + distX + " " + distY;
+								d1 += seg.type + newPoint.x + " " + newPoint.y;
+							}
+					}
+				}
+				else if (counter < changePointAt)
+				{
+					var pointValue = {x: null, y: null, lenOrPoint: null, type: seg.type};
+
+					if (seg.type == "h"|| seg.type == "H" || seg.type == "v" || seg.type == "V")
+					{
+						pointValue.lenOrPoint = seg.values[0];
+					}
+					else 
+					{
+						pointValue.x = seg.values[0];			
+						pointValue.y = seg.values[1];
+					}
+
+					change+="Ty:"+ indexOfPointToChangeBeforeCurrentPoint_Y+ "Tx:"+ indexOfPointToChangeBeforeCurrentPoint_X;
+					if (counter == indexOfPointToChangeBeforeCurrentPoint_X && indexOfPointToChangeBeforeCurrentPoint_X != -1)
+					{
+						//if (segmentTochange.type.toLowerCase() == segmentTochange.type)
+						//{
+							if (pointValue.lenOrPoint == null)
+							{
+								if (segmentTochange.type == "v" || segmentTochange.type == "V")
+									pointValue.x = newPoint.x;								
+								else if (segmentTochange.type == "h" || segmentTochange.type == "H")
+									pointValue.y = newPoint.y;
+								else 
+								{
+									pointValue.x = newPoint.x;
+									pointValue.y = newPoint.y;
+								}
+							}
+							else
+							{
+								if (pointValue.type == "h" || pointValue.type == "H")
+								{
+									var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+									var distX = newPoint.x - origPointAbsoluteValueArray[1];//x
+									pointValue.lenOrPoint += distX;
+								}
+								else if (pointValue.type == "v" || pointValue.type == "V")
+								{
+									var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+									var distY = newPoint.y - origPointAbsoluteValueArray[1];//y
+									pointValue.lenOrPoint += distY;
+								}
+							}							
+						//}						
+					}
+
+					if (counter == indexOfPointToChangeBeforeCurrentPoint_Y && indexOfPointToChangeBeforeCurrentPoint_Y != -1)
+					{	
+						//if (segmentTochange.type.toLowerCase() == segmentTochange.type)
+						//{
+							if (pointValue.lenOrPoint == null)
+							{
+								if (segmentTochange.type == "v" || segmentTochange.type == "V")
+									pointValue.x = newPoint.x;								
+								else if (segmentTochange.type == "h" || segmentTochange.type == "H")
+									pointValue.y = newPoint.y;
+								else 
+								{
+									pointValue.x = newPoint.x;
+									pointValue.y = newPoint.y;
+								}
+							}
+							else
+							{
+								if (pointValue.type == "h" || pointValue.type == "H")
+								{
+									var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+									var distX = newPoint.x - origPointAbsoluteValueArray[1];//x
+									pointValue.lenOrPoint += distX;
+								}
+								else if (pointValue.type == "v" || pointValue.type == "V")
+								{
+									var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+									var distY = newPoint.y - origPointAbsoluteValueArray[1];//y
+									pointValue.lenOrPoint += distY;
+								}
+							}
+						//}					
+					}
+
+					d1 += seg.type;	
+					if (pointValue.lenOrPoint != null)
+						d1 += pointValue.lenOrPoint;
+					else
+						d1 += pointValue.x + " " + pointValue.y;				
+				}
+				else
+				{ 	//Point afer change point
+
+					var pointValue = {x: null, y: null, lenOrPoint: null, type: seg.type};
+
+					if (seg.type == "h"|| seg.type == "H" || seg.type == "v" || seg.type == "V")
+					{
+						pointValue.lenOrPoint = seg.values[0];
+					}
+					else 
+					{
+						pointValue.x = seg.values[0];			
+						pointValue.y = seg.values[1];
+					}
+
+					if (counter == indexOfPointToChangeAfterCurrentPoint_X && indexOfPointToChangeAfterCurrentPoint_X != -1)
+					{
+						//if (segmentTochange.type.toLowerCase() == segmentTochange.type)
+						//{
+								if (counter == 1)
+								{
+
+								}
+								else if (pointValue.lenOrPoint == null)
+								{
+									if (segmentTochange.type == "v" || segmentTochange.type == "V")
+										pointValue.x = newPoint.x;								
+									else if (segmentTochange.type == "h" || segmentTochange.type == "H")
+										pointValue.y = newPoint.y;
+									else 
+									{
+										pointValue.x = newPoint.x;
+										pointValue.y = newPoint.y;
+									}
+								}
+								else
+								{
+									if (pointValue.type == "h" || pointValue.type == "H")
+									{
+										var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+										var distX = origPointAbsoluteValueArray[1] - newPoint.x;//x
+										pointValue.lenOrPoint = distX;
+									}
+									else if (pointValue.type == "v" || pointValue.type == "V")
+									{
+										var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+										var distY = origPointAbsoluteValueArray[1] - newPoint.y;//x
+										pointValue.lenOrPoint = distY;
+									}
+								}							
+						//}			
+					}
+
+					if (counter == indexOfPointToChangeAfterCurrentPoint_Y && indexOfPointToChangeAfterCurrentPoint_Y != -1)
+					{
+						change+="ATy:"+ indexOfPointToChangeAfterCurrentPoint_Y+ "ATx:"+ indexOfPointToChangeAfterCurrentPoint_X + ":absPath:"+segmentsWithAbsoluteValue[counter][1] +"index:"+counter;
+
+						//if (segmentTochange.type.toLowerCase() == segmentTochange.type)
+						//	{
+								if (counter == 1)
+								{
+
+								}
+								else if (pointValue.lenOrPoint == null)
+								{
+									if (segmentTochange.type == "v" || segmentTochange.type == "V")
+										pointValue.x = newPoint.x;								
+									else if (segmentTochange.type == "h" || segmentTochange.type == "H")
+										pointValue.y = newPoint.y;
+									else 
+									{
+										pointValue.x = newPoint.x;
+										pointValue.y = newPoint.y;
+									}
+								}
+								else
+								{
+									if (pointValue.type == "h"|| pointValue.type == "H")
+									{
+										var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+										var distX = origPointAbsoluteValueArray[1] - newPoint.x;//x
+										pointValue.lenOrPoint = distX;
+									}
+									else if (pointValue.type == "v" || pointValue.type == "V")
+									{
+										var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[counter];
+										var distY = origPointAbsoluteValueArray[1] - newPoint.y;//x
+										pointValue.lenOrPoint = distY;
+									}
+								}
+						//	}
+					}
+
+					d1 += seg.type;	
+					if (pointValue.lenOrPoint != null)
+						d1 += pointValue.lenOrPoint;
+					else
+						d1 += pointValue.x + " " + pointValue.y;
+				}
+			}
+			
+			this.displayShapeDitails(d1 + "{" + point.x+ " "+ point.y +"},"+ + changePointAt+ ":"+change);
+			this.shape.attr({
+				d: d1,
+			});
+		}
 
 		meshLineHR = this.shape.parent().line(0, svgpt.y, 1600, svgpt.y).attr({ stroke: '#123456', 'strokeWidth': 1, fill: 'gray', strokeDasharray: "5,5" });	
 		meshLineVR = this.shape.parent().line(svgpt.x, 0, svgpt.x, 1600).attr({ stroke: '#123456', 'strokeWidth': 1, fill: 'gray', strokeDasharray: "5,5" });
 		this.resetInnerTextAttr();
 	};	
+
+	return {onDrag: dragFunct, onDragStart: dragStartFunct, onDragStop: dragStopFunct}
+}
+
+SVGShape.prototype.addPolyLineDecorator = function()
+{
+
+	if(this.ShapeSpecificHelperGroup)
+	{
+		//Due to repeated events;
+		console.log("********Already Handler set ignoring...");
+		return;
+	}
+
+	var points = this.shape.node.points;
+	var meshLineHR = null;
+	var meshLineVR = null;
+
+	var polylineDragger = this.createPointDrawgger();
 
 	var removePoint = function (myPpoints, index)
 	{
@@ -8100,9 +8437,9 @@ SVGShape.prototype.addPolyLineDecorator = function()
 		var point = points.getItem(i);
 		var shapeResizer = polylineHelper.drawHelper(point.x, point.y, HELPER_CATAGORY.SUB_HELPER);
 
-		var myDragFunct = dragFunct.bind(this, shapeResizer, point);
-		var myDragStartFunct = dragStartFunct.bind(this);
-		var myDragStopFunct = dragStopFunct.bind(this);
+		var myDragFunct = polylineDragger.onDrag.bind(this, shapeResizer, point, -1);
+		var myDragStartFunct = polylineDragger.onDragStart.bind(this);
+		var myDragStopFunct = polylineDragger.onDragStop.bind(this);
 		shapeResizer.swDrag(myDragFunct, myDragStartFunct, myDragStopFunct);
 
 		var remPoint = removePoint.bind(this, points, i);
@@ -8132,6 +8469,84 @@ SVGShape.prototype.removePolyLineDecorator = function()
 		this.ShapeSpecificHelperGroup = null;
 		console.log("removing PolyLine group");
 	}
+}
+
+SVGShape.prototype.addPathDecorator = function()
+{
+	var origSegments = this.shape.node.getPathData();
+	var pathData = this.shape.attr("d");	
+	var segmentsWithAbsoluteValue = Snap.path.toAbsolute(pathData)
+	var pathHelper = new SW_ShapeHelper(this.shape.parent());
+	
+	var prevSeg = new Object;
+
+	var shapeDragger = this.createPointDrawgger();
+
+	for (var counter=0; counter < segmentsWithAbsoluteValue.length; counter++)
+	{
+		var segTypeAndValues = origSegments[counter];
+		var origPoint = {x: segTypeAndValues.values[0], y: segTypeAndValues.values[1]};	
+
+		//Seg is 0: type, 1: x, 2:y
+		var segWithAbsoluteValues = segmentsWithAbsoluteValue[counter];
+		
+		if (segWithAbsoluteValues[0] == "z" || segWithAbsoluteValues[0] == "Z")
+			continue;
+		
+		//Segment type in small letter means relative path
+		//var isRelatvePath = origSegments[counter].type.toUpperCase() != origSegments[counter].type;
+		
+		var pointAsAbsolute = new Object;
+		if (segWithAbsoluteValues.length == 3)
+		{
+			pointAsAbsolute = {x: segWithAbsoluteValues[1], y: segWithAbsoluteValues[2]};	
+		}
+		else
+		{
+			if (segWithAbsoluteValues[0] == "H")
+			{	
+				pointAsAbsolute = {x: segWithAbsoluteValues[1], y: prevSeg.y }
+			}
+			else if(segWithAbsoluteValues[0] == "V")
+			{
+				pointAsAbsolute = {x: prevSeg.x, y: segWithAbsoluteValues[1] }
+			}			
+		}
+
+		prevSeg = { x: pointAsAbsolute.x, y: pointAsAbsolute.y};
+
+		var shapeResizer = pathHelper.drawHelper(pointAsAbsolute.x, pointAsAbsolute.y, HELPER_CATAGORY.SUB_HELPER);
+
+		var myDragFunct = shapeDragger.onDrag.bind(this, shapeResizer, pointAsAbsolute, counter);
+		var myDragStartFunct = shapeDragger.onDragStart.bind(this);
+		var myDragStopFunct = shapeDragger.onDragStop.bind(this);
+		shapeResizer.swDrag(myDragFunct, myDragStartFunct, myDragStopFunct);
+
+		if (counter == 0)
+		{
+			this.ShapeSpecificHelperGroup = this.shape.parent().group(shapeResizer);
+		}
+		else		
+		{
+				
+			this.ShapeSpecificHelperGroup.append(shapeResizer); 
+		}
+	}
+
+	this.ShapeSpecificHelperGroup.attr({ class: 'SWShapeHelper', transform: this.shape.transform().localMatrix.toTransformString() });	
+
+}
+
+SVGShape.prototype.removePathDecorator = function()
+{
+
+	if (this.ShapeSpecificHelperGroup)
+		{
+			this.ShapeSpecificHelperGroup.selectAll('SWShapeHelper').remove();
+			this.ShapeSpecificHelperGroup.remove();
+			this.ShapeSpecificHelperGroup = null;
+			console.log("removing path group");
+		}
 }
 
 SVGShape.prototype.isBetweenPoints = function(a,b,c, tolerance)
@@ -9546,6 +9961,10 @@ SVGShape.prototype.addShapeEditHelper = function()
 			{
 				this.addArcModifier();			
 			}
+			else
+			{
+				this.addPathDecorator();
+			}
 		}
         else if (this.shape.type  == "polyline" )
         {
@@ -9597,6 +10016,10 @@ SVGShape.prototype.removeShapeEditHelper = function(keepObject)
 		else if (this.isArrow())
 		{
 			this.removeArrowHelper();
+		}
+		else if (this.shape.type  == "path")
+		{
+			this.removePathDecorator();
 		}
 		else if (this.isTable())
 		{
@@ -10708,8 +11131,13 @@ SVGShape.prototype.parseArrowPath = function ()
 	var arrowPath = null;
 	var segments = this.shape.node.getPathData();
  
+
+	if (segments == null || segments.length < 2)
+	{
+		return null;
+	}
 	// console.log("parsing  arrow path111");
-	if (segments[1].type == "C" || segments[1].type == "c")
+	else if (segments[1].type == "C" || segments[1].type == "c")
 	{
 	   // console.log("parsing  arrow pat222:" + segments.length);
 	    
