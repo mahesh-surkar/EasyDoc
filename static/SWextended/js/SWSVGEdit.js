@@ -7529,8 +7529,12 @@ SVGShape.prototype.addArcModifier = function()
 	
 
 	var curvePth = this.shape.parseCurvePath();
-
 	var bBox = this.shape.getBBox(1);
+	this.createArcModifier(curvePth);
+}
+
+SVGShape.prototype.createArcModifier = function (curvePth)
+{
 	//alert("curvePth" + curvePth.type);
 	var arcCenter = SW_SVG_UTIL.getArcCenter(curvePth)[0];	
 
@@ -8098,7 +8102,7 @@ SVGShape.prototype.createPointDrawgger = function()
 							var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[currentSegmentIndex];
 							var distX = origPointAbsoluteValueArray[1] - newPoint.x;//x
 							pointValue.x = distX;
-						}
+						}						
 					}
 				}
 				else
@@ -8158,7 +8162,7 @@ SVGShape.prototype.createPointDrawgger = function()
 							var origPointAbsoluteValueArray = segmentsWithAbsoluteValue[currentSegmentIndex];
 							var distY = origPointAbsoluteValueArray[2] - newPoint.y;//y
 							pointValue.y = distY;
-						}
+						}											
 					}
 				}
 				else
@@ -8197,7 +8201,26 @@ SVGShape.prototype.createPointDrawgger = function()
 				}				
 			}
 
-			return pointValue;
+
+			var segTypeInUpperCase = currentSegment.type.toUpperCase();
+			if (segTypeInUpperCase == "L" || segTypeInUpperCase == "H" || segTypeInUpperCase == "V" || segTypeInUpperCase == "M")
+			{
+				var newSegment = { type: currentSegment.type, values: []};
+
+				if (pointValue.lenOrPoint != null)
+				{	
+					newSegment.values[0] = pointValue.lenOrPoint;
+				}
+				else
+				{
+					newSegment.values[0] = pointValue.x;
+					newSegment.values[1] = pointValue.y;
+				}
+
+				return newSegment;
+			}			
+
+			return currentSegment;			
 	}
 
 	var dragFunct = function(shapeResizer, point, changePointAt, dx, dy, x, y,evt) 
@@ -8359,22 +8382,17 @@ SVGShape.prototype.createPointDrawgger = function()
 				}
 				else if (currentSegmentIndex < changePointAt)
 				{
-					var pointValue = calculatePosistionForPathSegment(seg, segmentTochange, currentSegmentIndex, newPoint, segmentsWithAbsoluteValue, indexOfPointToChangeBeforeCurrentPoint_X, indexOfPointToChangeBeforeCurrentPoint_Y, true);
+					var newSegment = calculatePosistionForPathSegment(seg, segmentTochange, currentSegmentIndex, newPoint, segmentsWithAbsoluteValue, indexOfPointToChangeBeforeCurrentPoint_X, indexOfPointToChangeBeforeCurrentPoint_Y, true);
 
-					d1 += seg.type;	
-					if (pointValue.lenOrPoint != null)
-						d1 += pointValue.lenOrPoint;
-					else
-						d1 += pointValue.x + " " + pointValue.y;				
+					d1 += newSegment.type;	
+					newSegment.values.forEach(value => d1 += " " + value)						
 				}
 				else
 				{ 	//Point after change point
-					var pointValue = calculatePosistionForPathSegment(seg, segmentTochange, currentSegmentIndex, newPoint, segmentsWithAbsoluteValue, indexOfPointToChangeAfterCurrentPoint_X, indexOfPointToChangeAfterCurrentPoint_Y, false);
-					d1 += seg.type;	
-					if (pointValue.lenOrPoint != null)
-						d1 += pointValue.lenOrPoint;
-					else
-						d1 += pointValue.x + " " + pointValue.y;
+					var newSegment = calculatePosistionForPathSegment(seg, segmentTochange, currentSegmentIndex, newPoint, segmentsWithAbsoluteValue, indexOfPointToChangeAfterCurrentPoint_X, indexOfPointToChangeAfterCurrentPoint_Y, false);
+					
+					d1 += newSegment.type;	
+					newSegment.values.forEach(value => d1 += " " + value)						
 				}
 			}
 			
@@ -8486,12 +8504,31 @@ SVGShape.prototype.addPathDecorator = function()
 		
 		if (segWithAbsoluteValues[0] == "z" || segWithAbsoluteValues[0] == "Z")
 			continue;
+		
+		if (segWithAbsoluteValues[0] == "a" || segWithAbsoluteValues[0] == "A" )
+		{
+			var curvePath = new Object;
+			
+			curvePath.type = segWithAbsoluteValues[0];
+			curvePath.arX = segWithAbsoluteValues[1]; //arc redius X
+			curvePath.arY = segWithAbsoluteValues[2]; //arc redius Y
+			curvePath.axR = segWithAbsoluteValues[3]; //arc x axis rotation
+			curvePath.alf = segWithAbsoluteValues[4]; //arc large flag
+			curvePath.asf = segWithAbsoluteValues[5]; //arc sweep flag
+			curvePath.ceX = segWithAbsoluteValues[6];
+			curvePath.ceY = segWithAbsoluteValues[7];
+			curvePath.csX = prevSeg.x;
+			curvePath.csY = prevSeg.y;	
 
+			this.createArcModifier(curvePath);
+			continue;
+		}
+		
 		var pointAsAbsolute = new Object;
 		if (segWithAbsoluteValues.length == 3)
 		{
 			pointAsAbsolute = {x: segWithAbsoluteValues[1], y: segWithAbsoluteValues[2]};	
-		}
+		}		
 		else
 		{
 			if (segWithAbsoluteValues[0] == "H")
