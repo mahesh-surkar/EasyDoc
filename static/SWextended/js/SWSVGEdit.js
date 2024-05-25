@@ -1875,7 +1875,7 @@ Snap.plugin(function (Snap, Element, Paper, glob)
 		
 	}
 	
-	Paper.prototype.arcUsingCenter = function (x, y, radiusX, radiusY, startAngle, endAngle, largeArcFlag)
+	Paper.prototype.arcUsingCenter = function (x, y, radiusX, radiusY, startAngle, endAngle, largeArcFlag, xAxisRotation)
 	{
 		function polarToCartesian(centerX, centerY, radiusX, radiusY, angleInDegrees) 
 		{
@@ -1895,7 +1895,7 @@ Snap.plugin(function (Snap, Element, Paper, glob)
 
 		var d1 = [
 		         "M", start.x, start.y, 
-		         "A", radiusX, radiusY, 0, largeArcFlag, sweepFlag, end.x, end.y
+		         "A", radiusX, radiusY, xAxisRotation, largeArcFlag, sweepFlag, end.x, end.y
 		         ].join(" ");
 
 		var arc = this.path(d1);
@@ -2253,7 +2253,7 @@ block.skew(90,0); // try (0,90 for skewY)
 	 */
 	
 	
-	Element.prototype.parseCurvePath = function (ignoreCurveArrow)
+	Element.prototype.parseCurvePath = function (segmentIndex, ignoreCurveArrow)
 	{
 		var curvePath = new Array;
 		
@@ -2263,9 +2263,15 @@ block.skew(90,0); // try (0,90 for skewY)
 			return curvePath;
 		}
 		
+		var parseParticularIndex = true;
 //		alert("ignoreCurveArrow222"+ignoreCurveArrow + ","+ typeof ignoreCurveArrow)
-		if (typeof ignoreCurveArrow === undefined) { ignoreCurveArrow = true; } 
+		if (ignoreCurveArrow == null || typeof ignoreCurveArrow === undefined) { ignoreCurveArrow = true; } 
 		
+		if (segmentIndex == null || typeof segmentIndex === undefined) 
+		{ 
+			segmentIndex = 1; 
+			parseParticularIndex = false; 
+		} 
 		
 		curvePath.Z = null;
 		
@@ -2277,7 +2283,7 @@ block.skew(90,0); // try (0,90 for skewY)
 		for (var counter=0; counter<segments.length; counter++)
 		{
 			var seg = segments[counter];
-			if (seg.type === "M") 
+			if (counter == segmentIndex-1) 
 			{
 				curvePath.csX = seg.values[0];
 				curvePath.csY = seg.values[1];			
@@ -2304,7 +2310,7 @@ block.skew(90,0); // try (0,90 for skewY)
 				var y = seg.values[1];			
 				//console.log(`L ${x} ${y}`);
 			}
-			else if (seg.type === "C") 
+			else if (counter == segmentIndex && (seg.type === "C" || seg.type === "c")) 
 			{	
 				curvePath.type=seg.type;
 				curvePath.crX1 = seg.values[0];
@@ -2316,7 +2322,7 @@ block.skew(90,0); // try (0,90 for skewY)
 
 				//console.log(`C curvePath.crX1 curvePath.crY1 curvePath.crX2, curvePath.crX2, curvePath.ceX  curvePath.ceY`);			
 			} 
-			else if (seg.type === "A") 
+			else if (counter == segmentIndex && (seg.type === "A" || seg.type === "a")) 
 			{
 				console.log("Processing arc");
 				curvePath.type=seg.type;
@@ -2339,6 +2345,9 @@ block.skew(90,0); // try (0,90 for skewY)
 			{
 				isOnlyCurve = false;
 			}
+
+			if (parseParticularIndex && counter == segmentIndex)
+				return curvePath;
 		}	
 
 		/*console.log("Curve path: " + curvePath.csX + ", "+ curvePath.csY +", "+ curvePath.crX1 +", "
@@ -7520,21 +7529,10 @@ SVGShape.prototype.removeShapeRotator = function()
 	}
 }
 
-SVGShape.prototype.addArcModifier = function()
+SVGShape.prototype.createArcModifier = function (arcIndexInPath)
 {
-	if (this.ShapeSpecificHelperGroup)
-	{
-		return; //already present
-	}
-	
+	var curvePth = this.shape.parseCurvePath(arcIndexInPath);
 
-	var curvePth = this.shape.parseCurvePath();
-	var bBox = this.shape.getBBox(1);
-	this.createArcModifier(curvePth);
-}
-
-SVGShape.prototype.createArcModifier = function (curvePth)
-{
 	//alert("curvePth" + curvePth.type);
 	var arcCenter = SW_SVG_UTIL.getArcCenter(curvePth)[0];	
 
@@ -7551,8 +7549,9 @@ SVGShape.prototype.createArcModifier = function (curvePth)
 
 	//var arcRefCircle = this.shape.parent().ellipse(arcCenter.x, arcCenter.y, origRediusX, origRediusY).attr({ class: 'SWShapeHelper', "fill-opacity": "0.0",  "stroke-opacity": "0.2", stroke: "gray", strokeDasharray: "5,5" }); 
 	
-	var arcRefCircle =  this.shape.parent().arcUsingCenter(arcCenter.x, arcCenter.y, origRediusX, origRediusY, 360, 359.99, 1).attr({ class: 'SWShapeHelper', "fill-opacity": "0.0",  "stroke-opacity": "0.2", stroke: "gray", strokeDasharray: "5,5" }); 
-	
+	var arcRefCircle =  this.shape.parent().arcUsingCenter(arcCenter.x, arcCenter.y, origRediusX, origRediusY, 360, 359.99, 1, curvePth.axR).attr({ class: 'SWShapeHelper', "fill-opacity": "0.0",  "stroke-opacity": "0.2", stroke: "gray", strokeDasharray: "5,5" }); 
+	//var arcRefCircle =  this.shape.parent().arcUsingCenter(arcCenter.x, arcCenter.y, origRediusX, origRediusY, 360, 359.99, 1, 0).attr({ class: 'SWShapeHelper', "fill-opacity": "0.0",  "stroke-opacity": "0.2", stroke: "gray", strokeDasharray: "5,5" }); 
+
 	var arcRefLine1 = this.shape.parent().linePath(arcCenter.x, arcCenter.y, curvePth.csX, curvePth.csY).attr({class: 'SWShapeHelper', stroke: "blue",  "stroke-opacity": "0.2", strokeDasharray: "5,5"});
 	var arcRefLine2 = this.shape.parent().linePath(arcCenter.x, arcCenter.y, curvePth.ceX, curvePth.ceY).attr({class: 'SWShapeHelper', stroke: "blue",  "stroke-opacity": "0.2", strokeDasharray: "5,5"});
 
@@ -7587,7 +7586,7 @@ SVGShape.prototype.createArcModifier = function (curvePth)
 	{
 		this.removeShapeEditHelper({keepArcModifier: true});
 
-		curvePth = this.shape.parseCurvePath();
+		curvePth = this.shape.parseCurvePath(arcIndexInPath);
 		arcCenter = SW_SVG_UTIL.getArcCenter(curvePth)[0];
 		
 		var mystartResizerXY = new Array;
@@ -7657,7 +7656,7 @@ SVGShape.prototype.createArcModifier = function (curvePth)
 		this.removeShapeEditHelper({keepArcModifier: false});
 		this.addShapeEditHelper();
 
-		curvePth = this.shape.parseCurvePath();
+		curvePth = this.shape.parseCurvePath(arcIndexInPath);
 		arcCenter = SW_SVG_UTIL.getArcCenter(curvePth)[0];
 
 		if (resizerType == "CS")
@@ -7774,7 +7773,7 @@ SVGShape.prototype.createArcModifier = function (curvePth)
 				newCurvePath.arY= newRediusY;
 			}
 			
-			var tmpArcRefCircle =  this.shape.parent().arcUsingCenter(arcCenter.x, arcCenter.y, newCurvePath.arX, newCurvePath.arY, 360, 359.99, 1).attr({ class: 'SWShapeHelper', "fill-opacity": "0.0",  "stroke-opacity": "0.2", stroke: "gray", strokeDasharray: "5,5" }); 	
+			var tmpArcRefCircle =  this.shape.parent().arcUsingCenter(arcCenter.x, arcCenter.y, newCurvePath.arX, newCurvePath.arY, 360, 359.99, 1, curvePath.axR).attr({ class: 'SWShapeHelper', "fill-opacity": "0.0",  "stroke-opacity": "0.2", stroke: "gray", strokeDasharray: "5,5" }); 	
 			arcRefCircle.attr({ d: tmpArcRefCircle.attr('d') });
 			tmpArcRefCircle.remove();
 			
@@ -7798,12 +7797,12 @@ SVGShape.prototype.createArcModifier = function (curvePth)
 		var centerDiffX = Math.abs(newArcCenter[0].x - arcCenter.x);
 		var centerDiffY = Math.abs(newArcCenter[0].y - arcCenter.y);
 
-		if (centerDiffX > 2 || centerDiffY > 2)
+		if (resizerType != "RD" && (centerDiffX > 2 || centerDiffY > 2))
 		{
 			newCurvePath.alf = curvePath.alf == 0 ? 1 : 0;
 		}	
 
-		this.displayShapeDitails(centerDiffX +","+ centerDiffY+","+newCurvePath.asf +";"+ curvePath.asf +","+ Math.round(newArcCenter[0].x)+","+ Math.round(newArcCenter[0].y)+ "," +  arcCenter.x+ ","+arcCenter.y);
+		//this.displayShapeDitails(centerDiffX +","+ centerDiffY+","+newCurvePath.asf +";"+ curvePath.asf +","+ Math.round(newArcCenter[0].x)+","+ Math.round(newArcCenter[0].y)+ "," +  arcCenter.x+ ","+arcCenter.y);
 		
 		//var angleBetweenArcPts = SW_SVG_UTIL.angleBetweenTwoLinesClockwise({x: newCurvePath.csX, y: newCurvePath.csY}, arcCenter, {x: newCurvePath.ceX, y: newCurvePath.ceY});
 	
@@ -7821,7 +7820,7 @@ SVGShape.prototype.createArcModifier = function (curvePth)
 		
 		//console.log("angleBetweenPoints"+ startPtAngleInDegrees +","+endPtAngleInDegrees +","+angleBetweenArcPts);
 		
-		this.resetCurvePathCord(newCurvePath);
+		this.resetCurvePathCord(newCurvePath, arcIndexInPath);
 		this.resetInnerTextAttr();
 		return;
 	}
@@ -7874,25 +7873,11 @@ SVGShape.prototype.createArcModifier = function (curvePth)
 	
 }
 
-
-SVGShape.prototype.removeArcModifier = function()
-{
-	//alert("call for remove Arc dec");
-	if (this.ShapeSpecificHelperGroup)
-	{
-		this.ShapeSpecificHelperGroup.selectAll('SWShapeHelper').remove();
-		this.ShapeSpecificHelperGroup.remove();
-		this.ShapeSpecificHelperGroup = null;
-		//console.log("removing Arc group");
-	}
-}
-
 SVGShape.prototype.addCurveDecorator = function()
 {
 
 	if (this.shape.type == "path")
 	{
-
 		var curvePth = this.shape.parseCurvePath();
 
 		var len = Snap.path.getTotalLength(this.shape);
@@ -8502,25 +8487,22 @@ SVGShape.prototype.addPathDecorator = function()
 		//Seg is 0: type, 1: x, 2:y
 		var segWithAbsoluteValues = segmentsWithAbsoluteValue[counter];
 		
+		var nextSeg = null;
+
+		if (counter+1 < segmentsWithAbsoluteValue.length)
+		{
+			var nextSeg = segmentsWithAbsoluteValue[counter+1];
+		}
+
 		if (segWithAbsoluteValues[0] == "z" || segWithAbsoluteValues[0] == "Z")
 			continue;
 		
+		if (counter == 0 && (nextSeg[0] == "a" || nextSeg[0] == "A"))
+			continue;
+
 		if (segWithAbsoluteValues[0] == "a" || segWithAbsoluteValues[0] == "A" )
 		{
-			var curvePath = new Object;
-			
-			curvePath.type = segWithAbsoluteValues[0];
-			curvePath.arX = segWithAbsoluteValues[1]; //arc redius X
-			curvePath.arY = segWithAbsoluteValues[2]; //arc redius Y
-			curvePath.axR = segWithAbsoluteValues[3]; //arc x axis rotation
-			curvePath.alf = segWithAbsoluteValues[4]; //arc large flag
-			curvePath.asf = segWithAbsoluteValues[5]; //arc sweep flag
-			curvePath.ceX = segWithAbsoluteValues[6];
-			curvePath.ceY = segWithAbsoluteValues[7];
-			curvePath.csX = prevSeg.x;
-			curvePath.csY = prevSeg.y;	
-
-			this.createArcModifier(curvePath);
+			this.createArcModifier(counter);
 			continue;
 		}
 		
@@ -8563,16 +8545,20 @@ SVGShape.prototype.addPathDecorator = function()
 	this.ShapeSpecificHelperGroup.attr({ class: 'SWShapeHelper', transform: this.shape.transform().localMatrix.toTransformString() });	
 }
 
-SVGShape.prototype.removePathDecorator = function()
+SVGShape.prototype.removePathDecorator = function(keepObject)
 {
-
-	if (this.ShapeSpecificHelperGroup)
-		{
-			this.ShapeSpecificHelperGroup.selectAll('SWShapeHelper').remove();
-			this.ShapeSpecificHelperGroup.remove();
-			this.ShapeSpecificHelperGroup = null;
-			console.log("removing path group");
-		}
+	if (keepObject == undefined ||  keepObject == null)
+	{
+		keepObject = {};
+	}
+	
+	if (this.ShapeSpecificHelperGroup && (keepObject.keepArcModifier === undefined || !keepObject.keepArcModifier))
+	{
+		this.ShapeSpecificHelperGroup.selectAll('SWShapeHelper').remove();
+		this.ShapeSpecificHelperGroup.remove();
+		this.ShapeSpecificHelperGroup = null;
+		console.log("removing path group");
+	}
 }
 
 SVGShape.prototype.isBetweenPoints = function(a,b,c, tolerance)
@@ -9981,12 +9967,8 @@ SVGShape.prototype.addShapeEditHelper = function()
 			
 			if (this.isArrow())
         	{
-            this.addArrowHelper();
-        	}	
-			else if (this.shapeType == "arcCurve") //arc
-			{
-				this.addArcModifier();			
-			}
+            	this.addArrowHelper();
+        	}				
 			else
 			{
 				this.addPathDecorator();
@@ -10027,11 +10009,7 @@ SVGShape.prototype.removeShapeEditHelper = function(keepObject)
 	}	
 	else
 	{
-		if (this.shapeType == "arcCurve" && (keepObject.keepArcModifier === undefined || !keepObject.keepArcModifier))
-		{
-			this.removeArcModifier();
-		}
-		else if (this.shape.type  == "polyline" )
+		if (this.shape.type  == "polyline" )
 		{
 			this.removePolyLineDecorator();	
 		}
@@ -10045,7 +10023,7 @@ SVGShape.prototype.removeShapeEditHelper = function(keepObject)
 		}
 		else if (this.shape.type  == "path")
 		{
-			this.removePathDecorator();
+			this.removePathDecorator(keepObject);
 		}
 		else if (this.isTable())
 		{
@@ -11097,53 +11075,61 @@ SVGShape.prototype.resetArrowPathCord = function (arrowPath, rotation)
 	}
 }
 
-SVGShape.prototype.resetCurvePathCord = function (curvePath)
+SVGShape.prototype.resetCurvePathCord = function (curvePath, indexInPath)
 {
 
-	if (curvePath.type == "C" ||  curvePath.type == "c" )
-	{		
-			/*console.log("new Curve path: " + curvePath.csX + ", "+ curvePath.csY +", "+ curvePath.crX1 +", "
-			+  curvePath.crY1+", "+ curvePath.crX2 +", "+ curvePath.crY2 +", "+
-			curvePath.ceX+", "+ curvePath.ceY);*/
+	if (indexInPath === undefined) 
+		indexInPath = 1;
 		
-		//console.log("Editing cubi5f..2m ed
-		if (curvePath.csX === undefined || curvePath.csY === undefined ||
-				curvePath.crX1 === undefined || curvePath.crY1 === undefined || 
-				curvePath.crX2 === undefined || curvePath.crY2 === undefined ||
-				curvePath.ceX === undefined  || curvePath.ceY === undefined)
-		{
-			console.log("Error: Not setting cubic curve path");
-		}
-		else
+	if (this.shape.type == "path")
+	{
+		var origSegments = this.shape.node.getPathData();	
+		var d1 = "";
+
+		for (var counter=0; counter < origSegments.length; counter++)
 		{
 
-			var d1 = 
-				"M"+curvePath.csX+","+curvePath.csY+" "+curvePath.type+
-				curvePath.crX1+","+curvePath.crY1+" "+
-				(curvePath.crX2 ? curvePath.crX2+","+curvePath.crY2+" " : "")+
-				curvePath.ceX+","+curvePath.ceY + " " + curvePath.Z;
+			var newSegment = origSegments[counter];
+			d1 += newSegment.type;
 
-			this.shape.attr({
-				d: d1,
-			});
+			if (counter == indexInPath-1)
+			{
+				newSegment.values[0] = curvePath.csX;
+				newSegment.values[1] = curvePath.csY;
+				newSegment.values.forEach(value => d1 += " " + value);
+			}
+			else if (counter == indexInPath)
+			{
+				d2 = "";
+				if (curvePath.type == "C" ||  curvePath.type == "c" )
+				{
+					d2 = curvePath.crX1 +","+curvePath.crY1+" "+
+						(curvePath.crX2 ? curvePath.crX2+","+curvePath.crY2+" " : "")+
+						curvePath.ceX+","+curvePath.ceY + " " + curvePath.Z;
+				}
+				else if (curvePath.type == "A" ||  curvePath.type == "a" )
+				{
+					d2 = curvePath.arX+" "+curvePath.arY+" "+curvePath.axR+" "+ curvePath.alf + " "+ curvePath.asf +" "+
+					curvePath.ceX+" "+curvePath.ceY;					
+				}
+				else
+				{
+					newSegment.values.forEach(value => d2 += " " + value);
+				}
+
+				d1 += d2;
+				this.displayShapeDitails(newSegment.type + d2);
+			}
+			else 	
+			{
+				newSegment.values.forEach(value => d1 += " " + value);
+			}			
 		}
-	}
-	else if (curvePath.type == "A" ||  curvePath.type == "a" )
-	{			
-		var d1 = 
-			"M"+curvePath.csX+" "+curvePath.csY+" "+curvePath.type+
-			curvePath.arX+" "+curvePath.arY+" "+curvePath.axR+" "+ curvePath.alf + " "+ curvePath.asf +" "+
-			curvePath.ceX+" "+curvePath.ceY;
-		
+
 		this.shape.attr({
 			d: d1,
 		});
 	}
-	else
-	{
-			console.log("Error: Not setting path" + curvePath.type);
-	}
-	
 }
 
 SVGShape.prototype.parseArrowPath = function ()
@@ -11388,13 +11374,8 @@ SVGShape.prototype.setShapeType = function ()
 	//Extended shape
 	
 	var curvePath = this.shape.parseCurvePath()
-	
-	if (curvePath.type == "A" || curvePath.type == "a")
-	{
-		this.shapeType = "arcCurve";
-
-	}
-	else if (curvePath.type == "C" || curvePath.type == "c")
+		
+	if (curvePath.type == "C" || curvePath.type == "c")
 	{
 		this.shapeType = "cubicCurve";
 	}
@@ -11418,7 +11399,7 @@ SVGShape.prototype.setShapeType = function ()
 SVGShape.prototype.isCurvePath = function ()
 {
 
-	if (this.shapeType == "arcCurve" || this.shapeType == "cubicCurve")
+	if (this.shapeType == "cubicCurve")
 	{
 		return true;
 	}
