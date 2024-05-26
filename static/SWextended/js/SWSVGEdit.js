@@ -2290,7 +2290,7 @@ block.skew(90,0); // try (0,90 for skewY)
 				//console.log(`M curvePath.csX curvePath.csY`);
 
 			}
-			else if (seg.type === "L" || seg.type === "l") //Not expected in cubic/quadratic/arc curve
+			else if (counter == segmentIndex-1) //Not expected in cubic/quadratic/arc curve
 			{
 							
 				//check last seg is Arc
@@ -7531,9 +7531,10 @@ SVGShape.prototype.removeShapeRotator = function()
 
 SVGShape.prototype.createArcModifier = function (arcIndexInPath)
 {
+	//this.removeShapeEditHelper();
+
 	var curvePth = this.shape.parseCurvePath(arcIndexInPath);
 
-	//alert("curvePth" + curvePth.type);
 	var arcCenter = SW_SVG_UTIL.getArcCenter(curvePth)[0];	
 	var origAngleBetweenArcPts = SW_SVG_UTIL.angleBetweenTwoLinesClockwise({x: curvePth.csX, y: curvePth.csY}, arcCenter, {x: curvePth.ceX, y: curvePth.ceY});
 
@@ -7562,14 +7563,25 @@ SVGShape.prototype.createArcModifier = function (arcIndexInPath)
 	//var endHandle = arcHelper.drawHelper(curvePth.ceX, curvePth.ceY, HELPER_CATAGORY.SUB_HELPER);
 	//var rediusHandle = arcHelper.drawHelper(arcCenter.x, arcCenter.y, HELPER_CATAGORY.SUB_HELPER);
 	
-    var startHandle = this.shape.parent().circle(curvePth.csX, curvePth.csY, 15).attr({ class: 'SWShapeHelper', "fill-opacity": "0.5", fill: "brown", stroke: "brown", 'strokeWidth': 4, id: "p1" }); 
-	var endHandle = this.shape.parent().circle(curvePth.ceX, curvePth.ceY, 15).attr({ class: 'SWShapeHelper', "fill-opacity": "0.5", fill: "brown", stroke: "brown", 'strokeWidth':4, id: "p2" }); 
-	var rediusHandle = this.shape.parent().ellipse(arcCenter.x, arcCenter.y, 15, 15).attr({ class: 'SWShapeHelper', "fill-opacity": "0.5",  fill: "pink", stroke: "brown", 'strokeWidth': 4,  id: "p3" }); 	
+    var startHandle = this.shape.parent().circle(curvePth.csX, curvePth.csY, 15).attr({ class: 'SWShapeHelper', "fill-opacity": "0.2", fill: "brown", stroke: "black", 'strokeWidth': 4, "stroke-opacity": "0.5", id: "p1" }); 
+	var endHandle = this.shape.parent().circle(curvePth.ceX, curvePth.ceY, 15).attr({ class: 'SWShapeHelper', "fill-opacity": "0.2", fill: "brown", stroke: "black", 'strokeWidth':4, "stroke-opacity": "0.5", id: "p2" }); 
+	var rediusHandle = this.shape.parent().ellipse(arcCenter.x, arcCenter.y, 15, 15).attr({ class: 'SWShapeHelper', "fill-opacity": "0.2",  fill: "pink", stroke: "black", 'strokeWidth': 4,  "stroke-opacity": "0.5", id: "p3" }); 	
 	
 	
-	this.ShapeSpecificHelperGroup = this.shape.parent().group(arcRefCircle,arcRefLine1, arcRefLine2, startHandle, endHandle, rediusHandle);
-	this.ShapeSpecificHelperGroup.attr({ class: 'SWShapeHelper', transform: this.shape.transform().localMatrix.toTransformString() });
-	
+	if (this.ShapeSpecificHelperGroup)
+	{
+		this.ShapeSpecificHelperGroup.append(arcRefCircle);
+		this.ShapeSpecificHelperGroup.append(arcRefLine1);
+		this.ShapeSpecificHelperGroup.append(arcRefLine2);
+		this.ShapeSpecificHelperGroup.append(startHandle);
+		this.ShapeSpecificHelperGroup.append(endHandle);
+		this.ShapeSpecificHelperGroup.append(rediusHandle);
+	}
+	else
+	{
+		this.ShapeSpecificHelperGroup = this.shape.parent().group(arcRefCircle,arcRefLine1, arcRefLine2, startHandle, endHandle, rediusHandle);
+		this.ShapeSpecificHelperGroup.attr({ class: 'SWShapeHelper', transform: this.shape.transform().localMatrix.toTransformString() });
+	}
 		
 	var adjustLinePathLength = function(linePath, linePathNewSecCord, circleRadius, arcCenter)
 	{
@@ -7585,7 +7597,7 @@ SVGShape.prototype.createArcModifier = function (arcIndexInPath)
 
 	var arcResizeStart = function (mystartResizer, myendResizer, resizerType)
 	{
-		this.removeShapeEditHelper({keepArcModifier: true});
+		//this.removeShapeEditHelper();
 
 		curvePth = this.shape.parseCurvePath(arcIndexInPath);
 		arcCenter = SW_SVG_UTIL.getArcCenter(curvePth)[0];
@@ -7655,7 +7667,7 @@ SVGShape.prototype.createArcModifier = function (arcIndexInPath)
 	var arcResizeEnd = function (arcRefCircle, myresizer, resizerType)
 	{
 		//Reset as size of shape is changed.
-		this.removeShapeEditHelper({keepArcModifier: false});
+		this.removeShapeEditHelper();
 		this.addShapeEditHelper();
 
 		curvePth = this.shape.parseCurvePath(arcIndexInPath);
@@ -8506,20 +8518,18 @@ SVGShape.prototype.addPathDecorator = function()
 
 		if (counter+1 < segmentsWithAbsoluteValue.length)
 		{
-			var nextSeg = segmentsWithAbsoluteValue[counter+1];
+			nextSeg = segmentsWithAbsoluteValue[counter+1];
 		}
 
 		if (segWithAbsoluteValues[0] == "z" || segWithAbsoluteValues[0] == "Z")
 			continue;
 		
+		if (segWithAbsoluteValues[0] == "a" || segWithAbsoluteValues[0] == "A" )
+			continue;
+		
 		if (nextSeg != null && (nextSeg[0] == "a" || nextSeg[0] == "A"))
 		{
 			this.createArcModifier(counter+1);
-		}
-		
-		if (segWithAbsoluteValues[0] == "a" || segWithAbsoluteValues[0] == "A" )
-		{
-			continue;
 		}
 		
 		var pointAsAbsolute = new Object;
@@ -8548,27 +8558,22 @@ SVGShape.prototype.addPathDecorator = function()
 		var myDragStopFunct = shapeDragger.onDragStop.bind(this);
 		shapeResizer.swDrag(myDragFunct, myDragStartFunct, myDragStopFunct);
 
-		if (counter == 0)
+		if (this.ShapeSpecificHelperGroup)
 		{
-			this.ShapeSpecificHelperGroup = this.shape.parent().group(shapeResizer);
-		}
-		else		
-		{				
 			this.ShapeSpecificHelperGroup.append(shapeResizer); 
 		}
+		else		
+		{		
+			this.ShapeSpecificHelperGroup = this.shape.parent().group(shapeResizer);
+			this.ShapeSpecificHelperGroup.attr({ class: 'SWShapeHelper', transform: this.shape.transform().localMatrix.toTransformString() });	
+		}
 	}
 
-	this.ShapeSpecificHelperGroup.attr({ class: 'SWShapeHelper', transform: this.shape.transform().localMatrix.toTransformString() });	
 }
 
-SVGShape.prototype.removePathDecorator = function(keepObject)
+SVGShape.prototype.removePathDecorator = function()
 {
-	if (keepObject == undefined ||  keepObject == null)
-	{
-		keepObject = {};
-	}
-	
-	if (this.ShapeSpecificHelperGroup && (keepObject.keepArcModifier === undefined || !keepObject.keepArcModifier))
+	if (this.ShapeSpecificHelperGroup)
 	{
 		this.ShapeSpecificHelperGroup.selectAll('SWShapeHelper').remove();
 		this.ShapeSpecificHelperGroup.remove();
@@ -10039,7 +10044,7 @@ SVGShape.prototype.removeShapeEditHelper = function(keepObject)
 		}
 		else if (this.shape.type  == "path")
 		{
-			this.removePathDecorator(keepObject);
+			this.removePathDecorator();
 		}
 		else if (this.isTable())
 		{
